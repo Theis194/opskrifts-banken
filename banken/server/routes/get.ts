@@ -1,3 +1,6 @@
+import { Http } from "../wrapper.ts";
+import { getRecipes } from "../../db/recipes.ts";
+
 /*
 export async function exampleRouteFunction(
   req: Request,
@@ -9,3 +12,10 @@ export async function exampleRouteFunction(
 ): Promise<Response> {
 }
  */
+
+export async function getIndex(req: Request): Promise<Response> {
+  const recipes = await getRecipes(Http.db);
+  console.log(recipes);
+  
+  return Http.serveStaticFile(req, "./banken/public/index.html");
+}
