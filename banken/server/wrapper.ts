@@ -21,7 +21,7 @@ export class Http {
       DELETE: {},
     };
     this.staticDir = staticDir;
-    Http.db = new DB("password_manager.db");
+    Http.db = new DB("opskrifts_banken.db");
     Http.eta = new Eta({views: `${staticDir}/views`})
   }
   addRoute(
