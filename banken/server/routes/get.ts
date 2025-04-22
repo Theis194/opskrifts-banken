@@ -16,7 +16,6 @@ export async function exampleRouteFunction(
 export async function getIndex(req: Request): Promise<Response> {
   const recipes = await getFeaturedRecipes(Http.db);
   const recentlyAdded = await getRecentlyAdded(Http.db);
-  //console.log(recentlyAdded);
 
   const data = { recipes, recentlyAdded };
 

@@ -98,7 +98,6 @@
             </tr>
           </thead>
           <tbody>
-            <% console.log(it.recentlyAdded) %>
             <% it.recentlyAdded.forEach(function(recipe) { %>
               <%~ include("./partials/recently_added", {recipe: recipe})%>
             <% }); %>
