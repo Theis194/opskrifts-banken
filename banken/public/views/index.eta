@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cupcake">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Recipe Collection</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- DaisyUI -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="min-h-screen bg-base-100">
+  <%~ include("./partials/nav")%>
+
+  <!-- Hero Section -->
+  <div class="hero min-h-[40vh]" style="background-image: url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80');">
+    <div class="hero-overlay bg-opacity-60"></div>
+    <div class="hero-content text-center text-neutral-content">
+      <div class="max-w-md">
+        <h1 class="mb-5 text-5xl font-bold">Your Digital Recipe Box</h1>
+        <p class="mb-5">Organize, search, and access all your favorite recipes in one place. Say goodbye to that overflowing binder!</p>
+        <button class="btn btn-primary">Get Started</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 py-8">
+    <!-- Featured Recipes -->
+    <section class="mb-12">
+      <h2 class="text-3xl font-bold mb-6 flex items-center">
+        <i class="fas fa-star mr-3 text-secondary"></i>Featured Recipes
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <% it.recipes.forEach(function(recipe) { %>
+        <%~ include("./partials/recipe_card", {recipe: recipe})%>
+        <% }) %>
+
+      </div>
+    </section>
+
+    <!-- Quick Access Sections -->
+    <section class="mb-12">
+      <h2 class="text-3xl font-bold mb-6 flex items-center">
+        <i class="fas fa-bolt mr-3 text-accent"></i>Quick Access
+      </h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <a href="#" class="card bg-base-200 hover:bg-base-300 transition-colors">
+          <div class="card-body items-center text-center">
+            <i class="fas fa-clock text-3xl mb-2 text-primary"></i>
+            <h3 class="card-title text-lg">Quick Meals</h3>
+            <p class="text-sm">Under 30 minutes</p>
+          </div>
+        </a>
+        <a href="#" class="card bg-base-200 hover:bg-base-300 transition-colors">
+          <div class="card-body items-center text-center">
+            <i class="fas fa-leaf text-3xl mb-2 text-success"></i>
+            <h3 class="card-title text-lg">Vegetarian</h3>
+            <p class="text-sm">Plant-based options</p>
+          </div>
+        </a>
+        <a href="#" class="card bg-base-200 hover:bg-base-300 transition-colors">
+          <div class="card-body items-center text-center">
+            <i class="fas fa-ice-cream text-3xl mb-2 text-secondary"></i>
+            <h3 class="card-title text-lg">Desserts</h3>
+            <p class="text-sm">Sweet treats</p>
+          </div>
+        </a>
+        <a href="#" class="card bg-base-200 hover:bg-base-300 transition-colors">
+          <div class="card-body items-center text-center">
+            <i class="fas fa-fire text-3xl mb-2 text-error"></i>
+            <h3 class="card-title text-lg">Most Popular</h3>
+            <p class="text-sm">Family favorites</p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Recently Added -->
+    <section>
+      <h2 class="text-3xl font-bold mb-6 flex items-center">
+        <i class="fas fa-history mr-3 text-info"></i>Recently Added
+      </h2>
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Recipe</th>
+              <th>Category</th>
+              <th>Prep Time</th>
+              <th>Added</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% console.log(it.recentlyAdded) %>
+            <% it.recentlyAdded.forEach(function(recipe) { %>
+              <%~ include("./partials/recently_added", {recipe: recipe})%>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <%~ include("./partials/footer")%>
+
+  <script>
+    // You can add JavaScript functionality here later
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+</body>
+
+</html>

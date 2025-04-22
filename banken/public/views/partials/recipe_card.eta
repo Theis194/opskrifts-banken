@@ -1,0 +1,36 @@
+<% function getContrastColor(hexcolor) {
+  const r = parseInt(hexcolor.substr(1,2), 16);
+  const g = parseInt(hexcolor.substr(3,2), 16);
+  const b = parseInt(hexcolor.substr(5,2), 16);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return (yiq >= 128) ? 'black' : 'white';
+} %>
+
+<% function formatTime(minutes) {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes/60);
+  const mins = minutes % 60;
+  return `${hours}h${mins ? ` ${mins}m` : ''}`;
+} %>
+
+<div class="card bg-base-100 shadow-xl">
+  <figure><img src="<%= it.coverImage || 'https://images.unsplash.com/photo-1546069901-d5bfd2cbfb1f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80' %>" alt="<%= it.title %>" class="h-48 w-full object-cover" /></figure>
+  <div class="card-body">
+    <h3 class="card-title"><%= it.recipe.title %></h3>
+    <div class="flex flex-wrap gap-2 mb-2">
+      <% it.recipe.tags.forEach(function(tag) { %>
+      <span class="badge" style="background-color: <%= tag.color %>; border: none; color: white">
+        <%= tag.name %>
+      </span>
+      <% }); %>
+    </div>
+    <p><%= it.recipe.description %></p>
+    <div class="card-actions justify-between items-center mt-4">
+      <div class="flex items-center text-sm">
+        <i class="fas fa-clock mr-1"></i> <%= formatTime(it.recipe.prepTime + it.recipe.cookTime) %>
+        <i class="fas fa-utensils ml-3 mr-1"></i> <%= it.recipe.servings %> servings
+      </div>
+      <button class="btn btn-sm btn-primary">View Recipe</button>
+    </div>
+  </div>
+</div>

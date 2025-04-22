@@ -1,0 +1,30 @@
+<!-- Footer -->
+<footer class="footer p-10 bg-neutral text-neutral-content">
+  <div>
+    <span class="footer-title">
+      <i class="fas fa-utensils mr-2"></i>My Recipe Box
+    </span>
+    <a class="link link-hover">About</a>
+    <a class="link link-hover">Contact</a>
+    <a class="link link-hover">Privacy Policy</a>
+  </div>
+  <div>
+    <span class="footer-title">Categories</span>
+    <a class="link link-hover">Breakfast</a>
+    <a class="link link-hover">Lunch</a>
+    <a class="link link-hover">Dinner</a>
+    <a class="link link-hover">Desserts</a>
+  </div>
+  <div>
+    <span class="footer-title">Newsletter</span>
+    <div class="form-control w-80">
+      <label class="label">
+        <span class="label-text text-neutral-content">Enter your email address</span>
+      </label>
+      <div class="relative">
+        <input type="text" placeholder="username@site.com" class="input input-bordered w-full pr-16 text-neutral" />
+        <button class="btn btn-primary absolute top-0 right-0 rounded-l-none">Subscribe</button>
+      </div>
+    </div>
+  </div>
+</footer>

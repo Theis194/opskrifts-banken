@@ -1,0 +1,29 @@
+<tr>
+  <td>
+    <div class="flex items-center space-x-3">
+      <div class="avatar">
+        <div class="mask mask-squircle w-12 h-12">
+          <img src="https://images.unsplash.com/photo-1547592180-85f173990554?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="<%= it.recipe.title %>" />
+        </div>
+      </div>
+      <div>
+        <div class="font-bold"><%= it.recipe.title %></div>
+      </div>
+    </div>
+  </td>
+  <td>
+    <div class="flex flex-wrap gap-1">
+      <% it.recipe.categories.forEach(function(category) { %>
+      <span class="badge badge-ghost">
+        <i class="fas <%= category.icon %> mr-1"></i>
+        <%= category.name %>
+      </span>
+      <% }); %>
+    </div>
+  </td>
+  <td><%= it.recipe.prepTime %>m</td>
+  <td><%= it.recipe.addedAgo.replace('.0', '') %></td>
+  <th>
+    <button class="btn btn-ghost btn-xs">details</button>
+  </th>
+</tr>

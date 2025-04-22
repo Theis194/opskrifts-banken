@@ -1,0 +1,59 @@
+<!-- Navigation -->
+<div class="navbar bg-primary text-primary-content sticky top-0 z-50 shadow-lg">
+  <div class="navbar-start">
+    <div class="dropdown">
+      <label tabindex="0" class="btn btn-ghost lg:hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
+        </svg>
+      </label>
+      <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52 text-neutral">
+        <li><a href="#"><i class="fas fa-home mr-2"></i>Home</a></li>
+        <li><a href="#"><i class="fas fa-book mr-2"></i>All Recipes</a></li>
+        <li>
+          <a><i class="fas fa-tags mr-2"></i>Categories</a>
+          <ul class="p-2">
+            <li><a>Breakfast</a></li>
+            <li><a>Lunch</a></li>
+            <li><a>Dinner</a></li>
+            <li><a>Desserts</a></li>
+          </ul>
+        </li>
+        <li><a href="#"><i class="fas fa-plus-circle mr-2"></i>Add Recipe</a></li>
+      </ul>
+    </div>
+    <a class="btn btn-ghost normal-case text-xl">
+      <i class="fas fa-utensils mr-2"></i>My Recipe Box
+    </a>
+  </div>
+  <div class="navbar-center hidden lg:flex">
+    <ul class="menu menu-horizontal px-1">
+      <li><a href="#"><i class="fas fa-home mr-2"></i>Home</a></li>
+      <li><a href="#"><i class="fas fa-book mr-2"></i>All Recipes</a></li>
+      <li tabindex="0">
+        <details>
+          <summary><i class="fas fa-tags mr-2"></i>Categories</summary>
+          <ul class="p-2 bg-primary text-primary-content">
+            <li><a>Breakfast</a></li>
+            <li><a>Lunch</a></li>
+            <li><a>Dinner</a></li>
+            <li><a>Desserts</a></li>
+            <li><a>Vegetarian</a></li>
+            <li><a>Quick Meals</a></li>
+          </ul>
+        </details>
+      </li>
+      <li><a href="#"><i class="fas fa-plus-circle mr-2"></i>Add Recipe</a></li>
+    </ul>
+  </div>
+  <div class="navbar-end">
+    <div class="form-control">
+      <div class="input-group">
+        <input type="text" placeholder="Search recipes..." class="input input-bordered text-neutral" />
+        <button class="btn btn-square">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 import { Http } from "../wrapper.ts";
-import { getRecipes } from "../../db/recipes.ts";
+import { getFeaturedRecipes, getRecentlyAdded } from "../../db/recipes.ts";
 
 /*
 export async function exampleRouteFunction(
@@ -14,8 +14,11 @@ export async function exampleRouteFunction(
  */
 
 export async function getIndex(req: Request): Promise<Response> {
-  const recipes = await getRecipes(Http.db);
-  console.log(recipes);
-  
-  return Http.serveStaticFile(req, "./banken/public/index.html");
+  const recipes = await getFeaturedRecipes(Http.db);
+  const recentlyAdded = await getRecentlyAdded(Http.db);
+  //console.log(recentlyAdded);
+
+  const data = { recipes, recentlyAdded };
+
+  return Http.renderTemplate("index.eta", data);
 }
