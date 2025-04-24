@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 open: false,
                 get matches() {
                   if (!this.query) return [];
-                  return window.KNOWN_INGREDIENTS
+                  return globalThis.KNOWN_INGREDIENTS
                     .filter(i => i.toLowerCase().includes(this.query.toLowerCase()))
                     .slice(0, 8);
                 }
@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const badge = document.createElement("span");
       badge.className = `badge badge-ghost fas ${
-        window.KNOWN_CATEGORIES[categoryName]
+        globalThis.KNOWN_CATEGORIES[categoryName]
       } flex items-center gap-2 px-3 py-2 rounded-lg mr-2 mb-2`;
       badge.innerHTML = `
           ${categoryName}
@@ -148,7 +148,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const option = this.options[this.selectedIndex];
       const tagId = this.value;
       const tagName = option.text;
-      const tagColor = window.KNOWN_TAGS[tagName] || "#6b7280";
+      const tagColor = globalThis.KNOWN_TAGS[tagName] || "#6b7280";
 
       const badge = document.createElement("span");
       badge.className = `flex items-center gap-2 px-3 rounded-lg`;
@@ -168,13 +168,52 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Form submission
-  document.getElementById("recipe-form").addEventListener(
-    "submit",
-    function (e) {
-      e.preventDefault();
-      // Here you would handle the form submission, likely via fetch() to your backend
-      console.log("Form submitted", new FormData(this));
+  document.getElementById("recipe-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    // Prepare the data object with proper types
+    const data = {
+      title: formData.get('title'),
+      cover_image: formData.get('cover_image'),
+      description: formData.get('description'),
+      prepTime: formData.get('prep_time'), // Will be transformed by Zod
+      cookTime: formData.get('cook_time'), // Will be transformed by Zod
+      servings: formData.get('servings'),   // Will be transformed by Zod
+      difficulty: formData.get('difficulty'),
+      categories: formData.getAll('categories[]'),
+      tags: formData.getAll('tags[]'),
+      ingredients: Array.from({ length: formData.getAll('ingredients[0][name]').length }, (_, i) => ({
+        name: formData.get(`ingredients[${i}][name]`),
+        quantity: formData.get(`ingredients[${i}][quantity]`), // Will be transformed
+        unit: formData.get(`ingredients[${i}][unit]`),
+        notes: formData.get(`ingredients[${i}][notes]`) || ''
+      })),
+      instructions: Array.from({ length: formData.getAll('instructions[0][text]').length }, (_, i) => ({
+        text: formData.get(`instructions[${i}][text]`)
+      }))
+    };
+  
+    try {
+      const response = await fetch("/api/newRecipe", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save recipe");
+      }
+  
+      const result = await response.json();
+      console.log("Recipe saved successfully:", result);
       alert("Recipe saved successfully!");
-    },
-  );
+    } catch (error) {
+      console.error("Error saving recipe:", error);
+      alert(`Error: ${error.message}`);
+    }
+  });
 });

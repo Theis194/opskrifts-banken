@@ -261,7 +261,6 @@
     window.KNOWN_INGREDIENTS = <%~ JSON.stringify(it.ingredients) %>;
     window.KNOWN_TAGS = <%~ JSON.stringify(Object.fromEntries(it.tags)) %>;
     window.KNOWN_CATEGORIES = <%~ JSON.stringify(Object.fromEntries(it.categories)) %>;
-    <% console.log(it.categories) %>
   </script>
 
   <script src="../js/addRecipe.js"></script>

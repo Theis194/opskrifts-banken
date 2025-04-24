@@ -7,8 +7,7 @@ import {
   Recipe,
   RecipeSchema,
   TagNameArraySchema,
-} from "./schemas.ts";
-import { object, record } from "zod";
+} from "./recipe-db.ts";
 
 type FeaturedRecipeRow = [
   number, // id

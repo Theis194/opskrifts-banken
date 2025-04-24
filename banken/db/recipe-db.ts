@@ -1,4 +1,3 @@
-import { X509Certificate } from "node:crypto";
 import { z } from "zod";
 
 export const CategorySchema = z.object({
