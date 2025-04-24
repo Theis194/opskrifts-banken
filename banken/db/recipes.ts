@@ -1,5 +1,14 @@
 import { DB } from "https://deno.land/x/sqlite@v3.9.0/mod.ts";
-import { RecipeSchema, RecentRecipeSchema, RecentRecipe, Recipe } from "./schemas.ts";
+import {
+  CategoriNameArraySchema,
+  IngredientNameArraySchema,
+  RecentRecipe,
+  RecentRecipeSchema,
+  Recipe,
+  RecipeSchema,
+  TagNameArraySchema,
+} from "./schemas.ts";
+import { object, record } from "zod";
 
 type FeaturedRecipeRow = [
   number, // id
@@ -108,10 +117,10 @@ export async function getFeaturedRecipes(db: DB) {
 }
 
 type RecentRecipeRow = [
-  string,        // title
-  number,        // prep_time
-  string,        // added_ago (e.g. "Today", "2 days ago")
-  string | null  // categories (JSON string)
+  string, // title
+  number, // prep_time
+  string, // added_ago (e.g. "Today", "2 days ago")
+  string | null, // categories (JSON string)
 ];
 
 export async function getRecentlyAdded(db: DB) {
@@ -164,6 +173,84 @@ export async function getRecentlyAdded(db: DB) {
     return validatedRecipes;
   } catch (error) {
     console.error("Error fetching recipes:", error);
+    throw error;
+  }
+}
+
+type RawIngredientRow = [string];
+type RawIngredientRows = RawIngredientRow[];
+
+export async function getKnownIngredients(db: DB) {
+  try {
+    const query = `
+      SELECT name FROM ingredients Order By name
+    `;
+
+    const rows = db.query(query) as unknown as RawIngredientRows;
+
+    const names = IngredientNameArraySchema.parse(rows.map(([name]) => name));
+
+    return names;
+  } catch (error) {
+    console.error("Error fetching ingredients:", error);
+    throw error;
+  }
+}
+
+type RawCategoriRow = [string, string];
+type RawCategoriRows = RawCategoriRow[];
+export async function getKnownCateogires(db: DB) {
+  try {
+    const query = `
+      SELECT name, icon_class FROM categories Order By name
+    `;
+
+    const rows = db.query(query) as unknown as RawCategoriRows;
+
+    const names = CategoriNameArraySchema.parse(rows.map(([name, icon]) => ({
+      name,
+      icon
+    })));
+
+    const categoriMap = new Map<string, string>;
+
+    names.forEach(({name, icon}) => {
+      categoriMap.set(name, icon);
+    })
+
+    return categoriMap;
+  } catch (error) {
+    console.error("Error fetching ingredients:", error);
+    throw error;
+  }
+}
+
+type RawTagRow = [string, string];
+type RawTagRows = RawTagRow[];
+export async function getKnownTags(db: DB) {
+  try {
+    const query = `
+      SELECT name, color FROM tags Order By name
+    `;
+
+    const rows = db.query(query) as unknown as RawTagRows;
+
+    const tags: Tag[] = rows.map(([name, color]) => ({
+      name,
+      color
+    }));
+
+    const names = TagNameArraySchema.parse(tags);
+
+    const TagMap = new Map<string, string>;
+
+    names.forEach(({name, color}) => {
+      TagMap.set(name, color);
+    })
+
+    return TagMap;
+  } catch (error) {
+    console.error("Error fetching ingredients:", error);
     throw error;
   }
 }

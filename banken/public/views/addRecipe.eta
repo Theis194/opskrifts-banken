@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="cupcake">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +11,10 @@
   <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Alpine.js for reactivity -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
+
 <body>
   <%~ include("./partials/nav")%>
 
@@ -24,7 +28,7 @@
       <div class="card bg-base-100 shadow-lg">
         <div class="card-body">
           <h2 class="card-title text-xl mb-4">Basic Information</h2>
-          
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Recipe Title -->
             <div class="form-control">
@@ -92,7 +96,7 @@
       <div class="card bg-base-100 shadow-lg">
         <div class="card-body">
           <h2 class="card-title text-xl mb-4">Categories & Tags</h2>
-          
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Categories -->
             <div class="form-control">
@@ -104,12 +108,9 @@
               </div>
               <select id="category-select" class="select select-bordered w-full mt-2">
                 <option value="" disabled selected>Add a category</option>
-                <option value="1">Breakfast</option>
-                <option value="2">Lunch</option>
-                <option value="3">Dinner</option>
-                <option value="4">Dessert</option>
-                <option value="5">Vegan</option>
-                <option value="6">Vegetarian</option>
+                <% Array.from(it.categories.keys()).forEach(function(categori) {%>
+                  <option value="<%=categori%>"><%=categori%></option>
+                <% })%>
               </select>
             </div>
 
@@ -123,10 +124,9 @@
               </div>
               <select id="tag-select" class="select select-bordered w-full mt-2">
                 <option value="" disabled selected>Add a tag</option>
-                <option value="1">Quick Meal</option>
-                <option value="2">Comfort Food</option>
-                <option value="3">Family Favorite</option>
-                <option value="4">Freezer Friendly</option>
+                <% Array.from(it.tags.keys()).forEach(function(tag) {%>
+                  <option value="<%=tag%>"><%=tag%></option>
+                <% })%>
               </select>
             </div>
           </div>
@@ -142,43 +142,79 @@
               <i class="fas fa-plus mr-1"></i> Add Ingredient
             </button>
           </div>
-          
+
           <div id="ingredients-list" class="space-y-4">
             <!-- Ingredient rows will be added here -->
             <div class="ingredient-row grid grid-cols-12 gap-4 items-end">
+
+              <!-- 🔄 REPLACE THIS BLOCK -->
               <div class="col-span-5 form-control">
                 <label class="label">
                   <span class="label-text">Name*</span>
                 </label>
-                <input type="text" name="ingredients[0][name]" class="input input-bordered" required>
+
+                <!-- DaisyUI combobox w/ Alpine.js -->
+                <div x-data="{
+              query: '',
+              open: false,
+              get matches() {
+                if (!this.query) return [];
+                return window.KNOWN_INGREDIENTS
+                  .filter(i => i.toLowerCase().includes(this.query.toLowerCase()))
+                  .slice(0, 8);
+              }
+            }" class="relative w-full">
+                  <!-- input -->
+                  <input x-model="query" @focus="open = true" @input="open = true" @keydown.escape="open = false" type="text" name="ingredients[0][name]" placeholder="e.g. chickpeas" class="input input-bordered w-full" autocomplete="off" required>
+
+                  <!-- dropdown -->
+                  <ul x-show="open && matches.length" @click.outside="open = false" class="menu dropdown-content p-2 shadow bg-base-100 rounded-box absolute w-full max-h-60 overflow-y-auto z-20" x-transition>
+                    <template x-for="item in matches" :key="item">
+                      <li>
+                        <a @click="query = item; open = false" x-text="item"></a>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
               </div>
+              <!-- 🔄 END REPLACEMENT -->
+
+              <!-- Quantity -->
               <div class="col-span-2 form-control">
                 <label class="label">
                   <span class="label-text">Quantity</span>
                 </label>
                 <input type="number" step="0.1" name="ingredients[0][quantity]" class="input input-bordered">
               </div>
+
+              <!-- Unit -->
               <div class="col-span-2 form-control">
                 <label class="label">
                   <span class="label-text">Unit</span>
                 </label>
                 <input type="text" name="ingredients[0][unit]" class="input input-bordered">
               </div>
+
+              <!-- Notes -->
               <div class="col-span-2 form-control">
                 <label class="label">
                   <span class="label-text">Notes</span>
                 </label>
                 <input type="text" name="ingredients[0][notes]" class="input input-bordered">
               </div>
+
+              <!-- Remove button -->
               <div class="col-span-1">
                 <button type="button" class="btn btn-error btn-sm remove-ingredient" disabled>
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
+
             </div>
           </div>
         </div>
       </div>
+
 
       <!-- Instructions Section -->
       <div class="card bg-base-100 shadow-lg">
@@ -189,7 +225,7 @@
               <i class="fas fa-plus mr-1"></i> Add Step
             </button>
           </div>
-          
+
           <div id="instructions-list" class="space-y-4">
             <!-- Instruction steps will be added here -->
             <div class="instruction-step">
@@ -221,6 +257,14 @@
 
   <%~ include("./partials/footer")%>
 
+  <script>
+    window.KNOWN_INGREDIENTS = <%~ JSON.stringify(it.ingredients) %>;
+    window.KNOWN_TAGS = <%~ JSON.stringify(Object.fromEntries(it.tags)) %>;
+    window.KNOWN_CATEGORIES = <%~ JSON.stringify(Object.fromEntries(it.categories)) %>;
+    <% console.log(it.categories) %>
+  </script>
+
   <script src="../js/addRecipe.js"></script>
 </body>
+
 </html>

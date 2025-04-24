@@ -7,24 +7,65 @@ document.addEventListener("DOMContentLoaded", function () {
       const newRow = document.createElement("div");
       newRow.className = "ingredient-row grid grid-cols-12 gap-4 items-end";
       newRow.innerHTML = `
-        <div class="col-span-5 form-control">
-          <input type="text" name="ingredients[${ingredientCount}][name]" class="input input-bordered" required>
-        </div>
-        <div class="col-span-2 form-control">
-          <input type="number" step="0.1" name="ingredients[${ingredientCount}][quantity]" class="input input-bordered">
-        </div>
-        <div class="col-span-2 form-control">
-          <input type="text" name="ingredients[${ingredientCount}][unit]" class="input input-bordered">
-        </div>
-        <div class="col-span-2 form-control">
-          <input type="text" name="ingredients[${ingredientCount}][notes]" class="input input-bordered">
-        </div>
-        <div class="col-span-1">
-          <button type="button" class="btn btn-error btn-sm remove-ingredient">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-      `;
+          <div class="col-span-5 form-control">
+            <label class="label">
+              <span class="label-text">Name*</span>
+            </label>
+        
+            <!-- combobox -->
+            <div
+              x-data="{
+                query: '',
+                open: false,
+                get matches() {
+                  if (!this.query) return [];
+                  return window.KNOWN_INGREDIENTS
+                    .filter(i => i.toLowerCase().includes(this.query.toLowerCase()))
+                    .slice(0, 8);
+                }
+              }"
+              class="relative w-full"
+            >
+              <input
+                x-model="query"
+                @focus="open = true"
+                @input="open = true"
+                @keydown.escape="open = false"
+                type="text"
+                name="ingredients[${ingredientCount}][name]"
+                placeholder="e.g. chickpeas"
+                class="input input-bordered w-full"
+                autocomplete="off"
+                required
+              >
+              <ul
+                x-show="open && matches.length"
+                @click.outside="open = false"
+                class="menu dropdown-content p-2 shadow bg-base-100 rounded-box absolute w-full max-h-60 overflow-y-auto z-20"
+                x-transition
+              >
+                <template x-for="item in matches" :key="item">
+                  <li><a @click="query = item; open = false" x-text="item"></a></li>
+                </template>
+              </ul>
+            </div>
+          </div>
+        
+          <div class="col-span-2 form-control">
+            <input type="number" step="0.1" name="ingredients[${ingredientCount}][quantity]" class="input input-bordered">
+          </div>
+          <div class="col-span-2 form-control">
+            <input type="text" name="ingredients[${ingredientCount}][unit]" class="input input-bordered">
+          </div>
+          <div class="col-span-2 form-control">
+            <input type="text" name="ingredients[${ingredientCount}][notes]" class="input input-bordered">
+          </div>
+          <div class="col-span-1">
+            <button type="button" class="btn btn-error btn-sm remove-ingredient">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
       document.getElementById("ingredients-list").appendChild(newRow);
       ingredientCount++;
 
@@ -86,7 +127,9 @@ document.addEventListener("DOMContentLoaded", function () {
       const categoryName = option.text;
 
       const badge = document.createElement("span");
-      badge.className = "badge badge-secondary";
+      badge.className = `badge badge-ghost fas ${
+        window.KNOWN_CATEGORIES[categoryName]
+      } flex items-center gap-2 px-3 py-2 rounded-lg mr-2 mb-2`;
       badge.innerHTML = `
           ${categoryName}
           <input type="hidden" name="categories[]" value="${categoryId}">
@@ -105,9 +148,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const option = this.options[this.selectedIndex];
       const tagId = this.value;
       const tagName = option.text;
+      const tagColor = window.KNOWN_TAGS[tagName] || "#6b7280";
 
       const badge = document.createElement("span");
-      badge.className = "badge badge-accent";
+      badge.className = `flex items-center gap-2 px-3 rounded-lg`;
+      badge.style.backgroundColor = tagColor;
+      badge.style.color = "white";
       badge.innerHTML = `
           ${tagName}
           <input type="hidden" name="tags[]" value="${tagId}">

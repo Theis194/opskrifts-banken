@@ -1,5 +1,5 @@
 import { Http } from "../wrapper.ts";
-import { getFeaturedRecipes, getRecentlyAdded } from "../../db/recipes.ts";
+import { getFeaturedRecipes, getRecentlyAdded, getKnownIngredients, getKnownCateogires, getKnownTags } from "../../db/recipes.ts";
 
 /*
 export async function exampleRouteFunction(
@@ -23,5 +23,11 @@ export async function getIndex(_req: Request): Promise<Response> {
 }
 
 export async function getAddRecipe(_req: Request): Promise<Response> {
-  return await Http.renderTemplate("addRecipe");
+  const ingredients = await getKnownIngredients(Http.db);
+  const categories = await getKnownCateogires(Http.db);
+  const tags = await getKnownTags(Http.db);
+  
+  const data = { ingredients, categories, tags };
+
+  return await Http.renderTemplate("addRecipe", data);
 }
