@@ -7,29 +7,15 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
         </svg>
       </label>
-      <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52 text-neutral">
-        <li><a href="#"><i class="fas fa-home mr-2"></i>Home</a></li>
-        <li><a href="#"><i class="fas fa-book mr-2"></i>All Recipes</a></li>
-        <li>
-          <a><i class="fas fa-tags mr-2"></i>Categories</a>
-          <ul class="p-2">
-            <li><a>Breakfast</a></li>
-            <li><a>Lunch</a></li>
-            <li><a>Dinner</a></li>
-            <li><a>Desserts</a></li>
-          </ul>
-        </li>
-        <li><a href="#"><i class="fas fa-plus-circle mr-2"></i>Add Recipe</a></li>
-      </ul>
     </div>
-    <a class="btn btn-ghost normal-case text-xl">
+    <a href="/" class="btn btn-ghost normal-case text-xl">
       <i class="fas fa-utensils mr-2"></i>My Recipe Box
     </a>
   </div>
   <div class="navbar-center hidden lg:flex">
     <ul class="menu menu-horizontal px-1">
-      <li><a href="#"><i class="fas fa-home mr-2"></i>Home</a></li>
-      <li><a href="#"><i class="fas fa-book mr-2"></i>All Recipes</a></li>
+      <li><a href="/"><i class="fas fa-home mr-2"></i>Home</a></li>
+      <li><a href="/"><i class="fas fa-book mr-2"></i>All Recipes</a></li>
       <li tabindex="0">
         <details>
           <summary><i class="fas fa-tags mr-2"></i>Categories</summary>
@@ -43,7 +29,7 @@
           </ul>
         </details>
       </li>
-      <li><a href="#"><i class="fas fa-plus-circle mr-2"></i>Add Recipe</a></li>
+      <li><a href="/tilfoj-opskrift"><i class="fas fa-plus-circle mr-2"></i>Add Recipe</a></li>
     </ul>
   </div>
   <div class="navbar-end">

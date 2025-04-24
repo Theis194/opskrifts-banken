@@ -13,11 +13,15 @@ export async function exampleRouteFunction(
 }
  */
 
-export async function getIndex(req: Request): Promise<Response> {
+export async function getIndex(_req: Request): Promise<Response> {
   const recipes = await getFeaturedRecipes(Http.db);
   const recentlyAdded = await getRecentlyAdded(Http.db);
 
   const data = { recipes, recentlyAdded };
 
   return Http.renderTemplate("index.eta", data);
+}
+
+export async function getAddRecipe(_req: Request): Promise<Response> {
+  return await Http.renderTemplate("addRecipe");
 }
