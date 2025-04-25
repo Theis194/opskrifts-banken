@@ -1,16 +1,16 @@
 import jwt from "jsonwebtoken";
-import { User, Role } from "../acm/permission.ts";
+import { SafeUser } from "../db/user-db.ts";
 
 const SECRET_KEY = "your-secret-key";
 const REFRESH_SECRET_KEY = "your-refresh-secret-key";
 
-export function generateToken(user: { email: string; username: string; role: Role }): string {
+export function generateToken(user: SafeUser): string {
   return jwt.sign({ email: user.email, username: user.username, role: user.role }, SECRET_KEY, {
     expiresIn: "1h",
   });
 }
 
-export function generateRefreshToken(user: { email: string; username: string; role: Role }): string {
+export function generateRefreshToken(user: SafeUser): string {
   return jwt.sign(
     { email: user.email, username: user.username, role: user.role },
     REFRESH_SECRET_KEY,
@@ -18,12 +18,12 @@ export function generateRefreshToken(user: { email: string; username: string; ro
   );
 }
 
-export function verifyToken(token: string): { email: string; username: string; role: Role } {
-  return jwt.verify(token, SECRET_KEY) as { email: string; username: string; role: Role };
+export function verifyToken(token: string): SafeUser {
+  return jwt.verify(token, SECRET_KEY) as SafeUser;
 }
 
-export function verifyRefreshToken(token: string): { email: string; username: string; role: Role } {
-  return jwt.verify(token, REFRESH_SECRET_KEY) as { email: string; username: string; role: Role };
+export function verifyRefreshToken(token: string): SafeUser {
+  return jwt.verify(token, REFRESH_SECRET_KEY) as SafeUser;
 }
 
 export function genereateGuestToken(): string {

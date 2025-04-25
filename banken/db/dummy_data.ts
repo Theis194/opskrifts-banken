@@ -13,7 +13,7 @@ function createTables() {
         password_hash TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_login TIMESTAMP,
-        is_admin BOOLEAN DEFAULT 0
+        role TEXT DEFAULT 'user'
       );
   
       -- Categories for recipes
@@ -161,7 +161,7 @@ async function insertDummyData() {
   try {
     // Insert users
     db.query(
-      `INSERT INTO users (username, email, password_hash, created_at, last_login, is_admin) VALUES 
+      `INSERT INTO users (username, email, password_hash, created_at, last_login, role) VALUES 
         (?, ?, ?, ?, ?, ?), 
         (?, ?, ?, ?, ?, ?), 
         (?, ?, ?, ?, ?, ?), 
@@ -169,28 +169,28 @@ async function insertDummyData() {
       [
         "chef_john",
         "john@example.com",
-        "$2a$10$xJwL5v5zL5v5zL5v5zL5vO",
-        "2023-01-15 09:30:00",
-        "2023-06-20 14:15:00",
-        1,
+        "$2a$12$qxV3TUr/LyeOzlmZOmWaGuRe9FXY5IAXSfA1W5BYUKCdHsYvyRC8G",
+        "2023-01-15T09:30:00",
+        "2023-06-20T14:15:00",
+        "admin",
         "baking_queen",
         "mary@example.com",
-        "$2a$10$xJwL5v5zL5v5zL5v5zL5vO",
-        "2023-02-10 11:20:00",
-        "2023-06-18 10:45:00",
-        0,
+        "$2a$12$qxV3TUr/LyeOzlmZOmWaGuRe9FXY5IAXSfA1W5BYUKCdHsYvyRC8G",
+        "2023-02-10T11:20:00",
+        "2023-06-18T10:45:00",
+        "user",
         "vegan_dave",
         "dave@example.com",
-        "$2a$10$xJwL5v5zL5v5zL5v5zL5vO",
-        "2023-03-05 16:40:00",
-        "2023-06-19 18:30:00",
-        0,
+        "$2a$12$qxV3TUr/LyeOzlmZOmWaGuRe9FXY5IAXSfA1W5BYUKCdHsYvyRC8G",
+        "2023-03-05T16:40:00",
+        "2023-06-19T18:30:00",
+        "user",
         "quick_cook",
         "sarah@example.com",
-        "$2a$10$xJwL5v5zL5v5zL5v5zL5vO",
-        "2023-04-22 08:15:00",
-        "2023-06-20 12:00:00",
-        0,
+        "$2a$12$qxV3TUr/LyeOzlmZOmWaGuRe9FXY5IAXSfA1W5BYUKCdHsYvyRC8G",
+        "2023-04-22T08:15:00",
+        "2023-06-20T12:00:00",
+        "user",
       ],
     );
 
