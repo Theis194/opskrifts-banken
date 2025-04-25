@@ -13,6 +13,19 @@ import {
   Ressource,
   Role,
 } from "../acm/permission.ts";
+import { SafeUser } from "../db/user-db.ts";
+
+// For authenticated routes
+type AuthenticatedHandler = (
+  req: Request,
+  user: SafeUser, // No longer optional
+) => Promise<Response>;
+
+// For public routes
+type PublicHandler = (
+  req: Request,
+  user?: SafeUser, // Still optional
+) => Promise<Response>;
 
 export class Http {
   handlers: Record<
@@ -34,13 +47,11 @@ export class Http {
     Http.db = new DB("opskrifts_banken.db");
     Http.eta = new Eta({ views: `${staticDir}/views` });
   }
+
   addRoute(
     method: HttpMethods,
     path: string,
-    handler: (
-      req: Request,
-      user?: { email: string; username: string; role: Role },
-    ) => Promise<Response>,
+    handler: AuthenticatedHandler | PublicHandler,
     options: {
       requireAuth?: boolean;
       acm?: {
@@ -50,15 +61,14 @@ export class Http {
     } = { requireAuth: true },
   ): Http {
     this.handlers[method][path] = async (req: Request) => {
-      if (options.requireAuth) {
-        const { user, response } = await Http.authMiddleware(req);
-        if (!user) {
-          return response || new Response("Unauthorized", { status: 401 });
-        }
+      const { user, response } = await Http.authMiddleware(req);
 
-        // ACM permission check
+      if (options.requireAuth && !user) {
+        return response || new Response("Unauthorized", { status: 401 });
+      }
+
+      if (user && options.acm) {
         if (
-          options.acm &&
           !hasRessourcePermission(
             user.role,
             options.acm.resource,
@@ -67,9 +77,14 @@ export class Http {
         ) {
           return new Response("Forbidden", { status: 403 });
         }
-        return handler(req, user);
       }
-      return handler(req);
+
+      // Call handler with appropriate parameters
+      if (options.requireAuth) {
+        return (handler as AuthenticatedHandler)(req, user!); // We know user exists here
+      } else {
+        return (handler as PublicHandler)(req, user || undefined);
+      }
     };
     return this;
   }

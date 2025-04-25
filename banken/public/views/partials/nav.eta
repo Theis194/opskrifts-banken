@@ -31,7 +31,9 @@
           </ul>
         </details>
       </li>
+      <% if (it.isAdmin) { %>
       <li><a href="/tilfoj-opskrift"><i class="fas fa-plus-circle mr-2"></i>Add Recipe</a></li>
+      <% } %>
     </ul>
   </div>
 
@@ -49,6 +51,20 @@
       <label tabindex="0" class="btn btn-ghost btn-circle avatar">
         <i class="fas fa-user-circle text-2xl"></i>
       </label>
+
+      <% if (it.isLoggedIn) { %>
+      <!-- If user IS logged in - you would conditionally show this instead -->
+      <ul tabindex="0" class="dropdown-content menu menu-sm p-2 shadow bg-primary rounded-box w-52 mt-3" id="user-dropdown">
+        <li>
+          <a class="justify-between">
+            Profile
+            <span class="badge">New</span>
+          </a>
+        </li>
+        <li><a><i class="fas fa-cog mr-2"></i> Settings</a></li>
+        <li><a><i class="fas fa-sign-out-alt mr-2"></i> Logout</a></li>
+      </ul>
+      <% } else { %>
       <!-- If user is NOT logged in -->
       <ul tabindex="0" class="dropdown-content menu menu-sm p-2 shadow bg-primary rounded-box w-52 mt-3" id="user-dropdown">
         <li>
@@ -62,18 +78,8 @@
           </a>
         </li>
       </ul>
-      <!-- If user IS logged in - you would conditionally show this instead -->
-      <% /* <ul tabindex="0" class="dropdown-content menu menu-sm p-2 shadow bg-primary rounded-box w-52 mt-3" id="user-dropdown">
-        <li>
-          <a class="justify-between">
-            Profile
-            <span class="badge">New</span>
-          </a>
-        </li>
-        <li><a><i class="fas fa-cog mr-2"></i> Settings</a></li>
-        <li><a><i class="fas fa-sign-out-alt mr-2"></i> Logout</a></li>
-      </ul> */ %>
-      
+      <% } %>
+
     </div>
   </div>
 
@@ -88,50 +94,34 @@
         <label class="label" for="username">
           <span class="label-text">Username or Email</span>
         </label>
-        <input 
-          type="text" 
-          name="username" 
-          placeholder="Enter your username or email" 
-          class="input input-bordered w-full" 
-          required
-        />
+        <input type="text" name="username" placeholder="Enter your username or email" class="input input-bordered w-full" required />
       </div>
-      
+
       <div class="form-control">
         <label class="label" for="password">
           <span class="label-text">Password</span>
         </label>
-        <input 
-          type="password" 
-          name="password" 
-          placeholder="Enter your password" 
-          class="input input-bordered w-full" 
-          required
-        />
+        <input type="password" name="password" placeholder="Enter your password" class="input input-bordered w-full" required />
         <label class="label">
           <a href="#" class="label-text-alt link link-hover">Forgot password?</a>
         </label>
       </div>
-      
+
       <div class="form-control mt-6">
         <button type="submit" class="btn btn-primary">Login</button>
       </div>
     </form>
-    
+
     <div class="divider">OR</div>
-    
+
     <div class="text-center">
-      <p class="text-sm">Don't have an account? 
-        <a 
-          href="#" 
-          class="link link-primary"
-          onclick="document.getElementById('login_modal').close(); document.getElementById('register_modal').showModal()"
-        >
+      <p class="text-sm">Don't have an account?
+        <a href="#" class="link link-primary" onclick="document.getElementById('login_modal').close(); document.getElementById('register_modal').showModal()">
           Register here
         </a>
       </p>
     </div>
-    
+
     <div class="modal-action absolute top-2 right-2">
       <form method="dialog">
         <button class="btn btn-circle btn-ghost btn-sm">
@@ -142,7 +132,7 @@
       </form>
     </div>
   </div>
-  
+
   <!-- Clicking outside closes the modal -->
   <form method="dialog" class="modal-backdrop">
     <button>close</button>
