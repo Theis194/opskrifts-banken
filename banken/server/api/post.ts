@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { RecipeSchema } from "./recipe-create.ts";
+import { RecipeInserter } from "../../db/recipeInserter.ts";
+import { Http } from "../wrapper.ts";
 
 /*
 export async function exampleRouteFunction(
@@ -15,12 +17,15 @@ export async function exampleRouteFunction(
 
 export async function postNewRecipe(req: Request): Promise<Response> {
   try {
-    console.log("Recieved recipe");
     const rawData = await req.json();
 
     const recipeData = RecipeSchema.parse(rawData);
+    const userId = 1; // get userId from jwt
 
-    return Response.json(recipeData);
+    const inserter = new RecipeInserter(Http.db);
+    const recipeId = await inserter.insertRecipe(userId, recipeData);
+
+    return Response.json(`RecipeId: ${recipeId}`);
   } catch (error) {
     console.error(error);
     if (error instanceof z.ZodError) {
