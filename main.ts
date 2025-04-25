@@ -1,6 +1,6 @@
 import { Http } from "./banken/server/wrapper.ts";
 import { getAddRecipe, getIndex } from "./banken/server/routes/get.ts";
-import { postLogin, postNewRecipe } from "./banken/server/api/post.ts";
+import { postLogin, postLogout, postNewRecipe } from "./banken/server/api/post.ts";
 
 const server = new Http("./banken/public");
 
@@ -21,4 +21,5 @@ server
     },
   })
   .addRoute("POST", "/api/login", postLogin, { requireAuth: false })
+  .addRoute("POST", "/api/logout", postLogout, { requireAuth: false })
   .serve();

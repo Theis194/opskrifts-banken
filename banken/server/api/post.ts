@@ -122,3 +122,15 @@ export async function postLogin(req: Request): Promise<Response> {
     );
   }
 }
+
+export async function postLogout(req: Request): Promise<Response> {
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": 
+        `jwt=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly, ` +
+        `refreshToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly`
+    }
+  });
+}
