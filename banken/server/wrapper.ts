@@ -61,12 +61,15 @@ export class Http {
     } = { requireAuth: true },
   ): Http {
     this.handlers[method][path] = async (req: Request) => {
+      // Always run auth middleware to get user if available
       const { user, response } = await Http.authMiddleware(req);
 
+      // If auth is required but no user exists
       if (options.requireAuth && !user) {
         return response || new Response("Unauthorized", { status: 401 });
       }
 
+      // If user exists and ACM permissions are required
       if (user && options.acm) {
         if (
           !hasRessourcePermission(
