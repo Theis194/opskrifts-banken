@@ -1,8 +1,18 @@
 import { serveFile } from "https://deno.land/std@0.192.0/http/file_server.ts";
 import { DB } from "https://deno.land/x/sqlite@v3.9.0/mod.ts";
 import { Eta } from "https://deno.land/x/eta@v3.5.0/src/index.ts";
-import { verifyToken, generateToken, verifyRefreshToken, generateRefreshToken } from "../jwt/jwt.ts";
-import { Role } from "../acm/permission.ts";
+import {
+  generateRefreshToken,
+  generateToken,
+  verifyRefreshToken,
+  verifyToken,
+} from "../jwt/jwt.ts";
+import {
+  hasRessourcePermission,
+  Permission,
+  Ressource,
+  Role,
+} from "../acm/permission.ts";
 
 export class Http {
   handlers: Record<
@@ -22,7 +32,7 @@ export class Http {
     };
     this.staticDir = staticDir;
     Http.db = new DB("opskrifts_banken.db");
-    Http.eta = new Eta({views: `${staticDir}/views`})
+    Http.eta = new Eta({ views: `${staticDir}/views` });
   }
   addRoute(
     method: HttpMethods,
@@ -31,13 +41,31 @@ export class Http {
       req: Request,
       user?: { email: string; username: string; role: Role },
     ) => Promise<Response>,
-    requireAuth: boolean = true,
+    options: {
+      requireAuth?: boolean;
+      acm?: {
+        resource: Ressource;
+        permission: Permission;
+      };
+    } = { requireAuth: true },
   ): Http {
     this.handlers[method][path] = async (req: Request) => {
-      if (requireAuth) {
+      if (options.requireAuth) {
         const { user, response } = await Http.authMiddleware(req);
         if (!user) {
           return response || new Response("Unauthorized", { status: 401 });
+        }
+
+        // ACM permission check
+        if (
+          options.acm &&
+          !hasRessourcePermission(
+            user.role,
+            options.acm.resource,
+            options.acm.permission,
+          )
+        ) {
+          return new Response("Forbidden", { status: 403 });
         }
         return handler(req, user);
       }
@@ -46,7 +74,10 @@ export class Http {
     return this;
   }
 
-  static async serveStaticFile(req: Request, filePath: string): Promise<Response> {
+  static async serveStaticFile(
+    req: Request,
+    filePath: string,
+  ): Promise<Response> {
     try {
       const response = await serveFile(req, filePath);
       console.log("File served successfully:", filePath);
@@ -57,7 +88,10 @@ export class Http {
     }
   }
 
-  static renderTemplate(template: string, data: Record<string, unknown> = {}): Response {
+  static renderTemplate(
+    template: string,
+    data: Record<string, unknown> = {},
+  ): Response {
     const rendered = this.eta.render(template, data);
     return new Response(rendered, {
       headers: { "Content-Type": "text/html" },
@@ -79,26 +113,35 @@ export class Http {
 
   static async authMiddleware(
     req: Request,
-  ): Promise<{ user: { email: string; username: string; role: Role } | null; response?: Response }> {
+  ): Promise<
+    {
+      user: { email: string; username: string; role: Role } | null;
+      response?: Response;
+    }
+  > {
     const cookies = this.parseCookie(req);
     const token = cookies.jwt;
     const refreshToken = cookies.refreshToken;
     const url = new URL(req.url);
-    
+
     if (token) {
       try {
         const payload = verifyToken(token);
         return { user: payload };
       } catch (error) {
-        if (error instanceof Error && error.name === "TokenExpiredError" && refreshToken) {
+        if (
+          error instanceof Error && error.name === "TokenExpiredError" &&
+          refreshToken
+        ) {
           try {
             const refreshPayload = verifyRefreshToken(refreshToken);
             const newToken = generateToken(refreshPayload);
             const newRefreshToken = generateRefreshToken(refreshPayload);
 
             const headers = {
-              "Set-Cookie": `jwt=${newToken}; Path=/; Secure; HttpOnly, refreshToken=${newRefreshToken}; Path=/; Secure; HttpOnly`
-            }
+              "Set-Cookie":
+                `jwt=${newToken}; Path=/; Secure; HttpOnly, refreshToken=${newRefreshToken}; Path=/; Secure; HttpOnly`,
+            };
 
             const response = this.redirect(url, headers);
 
@@ -117,7 +160,9 @@ export class Http {
   }
 
   static redirect(url: URL, headers?: HeadersInit): Response {
-    const redirectUrl = `${url.origin}/login?redirect=${encodeURIComponent(url.pathname)}`
+    const redirectUrl = `${url.origin}/login?redirect=${
+      encodeURIComponent(url.pathname)
+    }`;
     return new Response(null, {
       status: 302,
       headers: {

@@ -1,20 +1,16 @@
+import { SafeUser } from "../db/user-db.ts";
+
 export type Role = 'admin' | 'user' | 'guest';
 export type Permission = 'read' | 'write' | 'delete';
-export type Ressource = 'post' | 'comment'
-
-export type User = {
-    email: string;
-    username: string;
-    master_password: string;
-    role: Role;
-}
+export type Ressource = 'recipe' | 'comment'
 
 const ressourcePermissions: Record<Ressource, Record<Role, Permission[]>> = {
-    post: {
+    recipe: {
         admin: ['read', 'write', 'delete'],
-        user: ['read', 'write'],
-        guest: ['read'],
+        user: [],
+        guest: [],
     },
+    // just an example
     comment: {
         admin: ['read', 'write', 'delete'],
         user: ['read', 'write'],
@@ -26,6 +22,6 @@ export function hasRessourcePermission(role: Role, ressource: Ressource, permiss
     return ressourcePermissions[ressource][role].includes(permission);
 }
 
-export function authorizeRessource(user: User, ressource: Ressource, permission: Permission): boolean {
+export function authorizeRessource(user: SafeUser, ressource: Ressource, permission: Permission): boolean {
     return hasRessourcePermission(user.role, ressource, permission);
 }
