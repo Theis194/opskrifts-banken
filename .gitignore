@@ -136,3 +136,4 @@ dist
 .pnp.*
 
 opskrifts_banken.db
+deno.lock
