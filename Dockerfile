@@ -9,4 +9,4 @@ RUN deno cache deps.ts
 # Copy all files
 COPY . .
 
-CMD["run", "--allow-write", "--allow-read", "--allow-net", "main.ts"]
+CMD ["run", "--allow-write", "--allow-read", "--allow-net", "main.ts"]
