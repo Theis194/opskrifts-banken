@@ -5,12 +5,13 @@ const env = await load();
 
 const dbPassword = Deno.env.get("DB_PASSWORD") || env["DB_PASSWORD"];
 const dbUser = Deno.env.get("DB_USER") || env["DB_USER"];
+const hostname = Deno.env.get("DB_HOSTNAME") || env["DB_HOSTNAME"];
 
 const client = new Client({
     user: dbUser,
     password: dbPassword,
     database: "banken",
-    hostname: "localhost",
+    hostname: hostname,
     port: 5432,
 });
 
