@@ -1,7 +1,7 @@
 {
   "tasks": {
-    "dev": "deno run --allow-write --allow-net --allow-read --watch main.ts",
-    "data": "deno run --allow-read --allow-write ./banken/db/dummy_data.ts"
+    "dev": "deno run --allow-write --allow-net --allow-read --allow-env --watch main.ts",
+    "data": "deno run --allow-write --allow-net --allow-read --allow-env ./banken/db/dummy_data.ts"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1",

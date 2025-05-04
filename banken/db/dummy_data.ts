@@ -5,7 +5,7 @@ const env = await load();
 
 const dbPassword = Deno.env.get("DB_PASSWORD") || env["DB_PASSWORD"];
 const dbUser = Deno.env.get("DB_USER") || env["DB_USER"];
-console.log(`user: ${dbUser}, pass: ${dbPassword}`);
+
 const client = new Client({
     user: dbUser,
     password: dbPassword,
