@@ -99,8 +99,8 @@ export async function getFeaturedRecipes(client: Client) {
                     author: row.author,
                     createdAt: row.created_at,
                     updatedAt: row.updated_at,
-                    categories: row.categories ? JSON.parse(row.categories) : [],
-                    tags: row.tags ? JSON.parse(row.tags) : [],
+                    categories: row.categories || [],
+                    tags: row.tags || [],
                 };
 
                 const validated = RecipeSchema.parse(recipeData);
@@ -118,39 +118,45 @@ export async function getFeaturedRecipes(client: Client) {
     }
 }
 
-type RecentRecipeRow = [
-    string, // title
-    number, // prep_time
-    string, // added_ago (e.g. "Today", "2 days ago")
-    string | null, // categories (JSON string)
-];
+type RecentRecipeRow = {
+    title: string;
+    prep_time: number;
+    added_ago: string;
+    categories: string | null;
+};
 
-export async function getRecentlyAdded(db: DB) {
+export async function getRecentlyAdded(client: Client) {
     try {
         const query = `
-        SELECT 
-          r.title,
-          r.prep_time,
-          CASE
-            WHEN ROUND(julianday('now') - julianday(r.created_at)) = 0 THEN 'Today'
-            WHEN ROUND(julianday('now') - julianday(r.created_at)) = 1 THEN '1 day ago'
-            ELSE ROUND(julianday('now') - julianday(r.created_at)) || ' days ago'
-          END AS added_ago,
-          (
-            SELECT 
-              JSON_GROUP_ARRAY(
-                JSON_OBJECT('name', c.name, 'icon', COALESCE(c.icon_class, ''))
-              )
-            FROM recipe_categories rc
-            JOIN categories c ON rc.category_id = c.category_id
-            WHERE rc.recipe_id = r.recipe_id
-          ) AS categories
-        FROM recipes r
-        ORDER BY ABS(julianday(r.created_at) - julianday('now')) ASC
-        LIMIT 3;
-      `;
-
-        const rows = db.query(query) as unknown as RecentRecipeRow[];
+  SELECT 
+    r.title,
+    r.prep_time,
+    CASE
+      WHEN CURRENT_DATE - r.created_at::date = 0 THEN 'Today'
+      WHEN CURRENT_DATE - r.created_at::date = 1 THEN '1 day ago'
+      ELSE (CURRENT_DATE - r.created_at::date)::text || ' days ago'
+    END AS added_ago,
+    (
+      SELECT 
+        COALESCE(
+          JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+              'name', c.name, 
+              'icon', COALESCE(c.icon_class, '')
+            )
+          ),
+          '[]'::jsonb
+        )
+      FROM recipe_categories rc
+      JOIN categories c ON rc.category_id = c.category_id
+      WHERE rc.recipe_id = r.recipe_id
+    ) AS categories
+  FROM recipes r
+  ORDER BY ABS(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - r.created_at))) ASC
+  LIMIT 3;
+`;
+        const result = await client.queryObject<RecentRecipeRow>(query);
+        const rows = result.rows;
 
         // Transform and validate each recipe
         const validatedRecipes: RecentRecipe[] = [];
@@ -158,16 +164,16 @@ export async function getRecentlyAdded(db: DB) {
         for (const row of rows) {
             try {
                 const recipeData = {
-                    title: row[0],
-                    prepTime: row[1],
-                    addedAgo: row[2],
-                    categories: row[3] ? JSON.parse(row[3]) : [],
+                    title: row.title,
+                    prepTime: row.prep_time,
+                    addedAgo: row.added_ago,
+                    categories: row.categories || [],
                 };
 
                 const validated = RecentRecipeSchema.parse(recipeData);
                 validatedRecipes.push(validated);
             } catch (error) {
-                console.error(`Error validating recipe ${row[0]} (${row[1]}):`, error);
+                console.error(`Error validating recipe ${row.title}:`, error);
                 // Optionally continue with other recipes even if one fails
             }
         }
@@ -179,18 +185,16 @@ export async function getRecentlyAdded(db: DB) {
     }
 }
 
-type RawIngredientRow = [string];
-type RawIngredientRows = RawIngredientRow[];
+type RawIngredientRow = { name: string };
 
-export async function getKnownIngredients(db: DB) {
+export async function getKnownIngredients(client: Client) {
     try {
         const query = `
-      SELECT name FROM ingredients Order By name
-    `;
+            SELECT name FROM ingredients ORDER BY name
+        `;
 
-        const rows = db.query(query) as unknown as RawIngredientRows;
-
-        const names = IngredientNameArraySchema.parse(rows.map(([name]) => name));
+        const result = await client.queryObject<RawIngredientRow>(query);
+        const names = IngredientNameArraySchema.parse(result.rows.map(row => row.name));
 
         return names;
     } catch (error) {
@@ -199,60 +203,74 @@ export async function getKnownIngredients(db: DB) {
     }
 }
 
-type RawCategoriRow = [string, string];
-type RawCategoriRows = RawCategoriRow[];
-export async function getKnownCateogires(db: DB) {
+type RawCategoryRow = {
+    name: string;
+    icon_class: string;
+};
+
+export async function getKnownCategories(client: Client): Promise<Map<string, string>> {
     try {
         const query = `
-      SELECT name, icon_class FROM categories Order By name
+      SELECT name, icon_class 
+      FROM categories 
+      ORDER BY name
     `;
 
-        const rows = db.query(query) as unknown as RawCategoriRows;
+        const result = await client.queryObject<RawCategoryRow>(query);
 
-        const names = CategoriNameArraySchema.parse(rows.map(([name, icon]) => ({
-            name,
-            icon
-        })));
+        // Validate against your CategorySchema array
+        const categories = CategoriNameArraySchema.parse(
+            result.rows.map(row => ({
+                name: row.name,
+                icon: row.icon_class
+            }))
+        );
 
-        const categoriMap = new Map<string, string>;
+        // Convert to Map
+        const categoryMap = new Map<string, string>();
+        categories.forEach(({ name, icon }) => {
+            categoryMap.set(name, icon);
+        });
 
-        names.forEach(({ name, icon }) => {
-            categoriMap.set(name, icon);
-        })
-
-        return categoriMap;
+        return categoryMap;
     } catch (error) {
-        console.error("Error fetching ingredients:", error);
+        console.error("Error fetching categories:", error);
         throw error;
     }
 }
 
-type RawTagRow = [string, string];
-type RawTagRows = RawTagRow[];
-export async function getKnownTags(db: DB) {
+type RawTagRow = {
+    name: string;
+    color: string;
+};
+
+export async function getKnownTags(client: Client): Promise<Map<string, string>> {
     try {
         const query = `
-      SELECT name, color FROM tags Order By name
+      SELECT name, color 
+      FROM tags 
+      ORDER BY name
     `;
 
-        const rows = db.query(query) as unknown as RawTagRows;
+        const result = await client.queryObject<RawTagRow>(query);
 
-        const tags: Tag[] = rows.map(([name, color]) => ({
-            name,
-            color
-        }));
+        // Directly parse with your TagNameArraySchema
+        const tags = TagNameArraySchema.parse(
+            result.rows.map(row => ({
+                name: row.name,
+                color: row.color
+            }))
+        );
 
-        const names = TagNameArraySchema.parse(tags);
+        // Convert to Map
+        const tagMap = new Map<string, string>();
+        tags.forEach(({ name, color }) => {
+            tagMap.set(name, color);
+        });
 
-        const TagMap = new Map<string, string>;
-
-        names.forEach(({ name, color }) => {
-            TagMap.set(name, color);
-        })
-
-        return TagMap;
+        return tagMap;
     } catch (error) {
-        console.error("Error fetching ingredients:", error);
+        console.error("Error fetching tags:", error);  // Fixed error message
         throw error;
     }
 }

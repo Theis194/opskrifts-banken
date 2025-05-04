@@ -37,7 +37,7 @@ export class Http {
     static client: Client;
     static eta: Eta;
 
-    constructor(staticDir: string) {
+    constructor(staticDir: string, client: Client, eta: Eta) {
         this.handlers = {
             GET: {},
             POST: {},
@@ -46,19 +46,27 @@ export class Http {
         };
         this.staticDir = staticDir;
 
-        const env = load();
+        Http.client = client;
+        Http.eta = eta
+    }
+
+    static async create(staticDir: string): Promise<Http> {
+        const env = await load();
 
         const dbPassword = Deno.env.get("DB_PASSWORD") || env["DB_PASSWORD"];
         const dbUser = Deno.env.get("DB_USER") || env["DB_USER"];
 
-        Http.client = new Client({
+        const client = new Client({
             user: dbUser,
             password: dbPassword,
             database: "banken",
             hostname: "localhost",
             port: 5432,
         });
-        Http.eta = new Eta({ views: `${staticDir}/views` });
+
+        const eta = new Eta({ views: `${staticDir}/views` });
+
+        return new Http(staticDir, client, eta);
     }
 
     addRoute(

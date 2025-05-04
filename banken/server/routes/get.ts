@@ -1,7 +1,7 @@
 import { Http } from "../wrapper.ts";
 import {
     getFeaturedRecipes,
-    getKnownCateogires,
+    getKnownCategories,
     getKnownIngredients,
     getKnownTags,
     getRecentlyAdded,
@@ -44,7 +44,7 @@ export async function getAddRecipe(
     const isAdmin = hasRessourcePermission(user.role, "recipe", "read");
     const isLoggedIn = user ? true : false;
     const ingredients = await getKnownIngredients(Http.client);
-    const categories = await getKnownCateogires(Http.client);
+    const categories = await getKnownCategories(Http.client);
     const tags = await getKnownTags(Http.client);
 
     const data = { isAdmin, isLoggedIn, ingredients, categories, tags };
