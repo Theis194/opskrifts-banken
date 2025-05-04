@@ -10,7 +10,7 @@ export class RecipeInserter {
     }
 
     async insertRecipe(userId: number, recipeData: Recipe): Promise<number> {
-        this.client.query("BEGIN TRANSACTION");
+        await this.client.queryObject("BEGIN TRANSACTION");
 
         try {
             this.recipeId = await this.insertRecipeBase(userId, recipeData);
@@ -20,10 +20,10 @@ export class RecipeInserter {
             await this.insertIngredients(recipeData.ingredients);
             await this.insertInstructions(recipeData.instructions);
 
-            this.client.query("COMMIT");
+            await this.client.queryObject("COMMIT");
             return this.recipeId;
         } catch (error) {
-            this.client.query("ROLLBACK");
+            await this.client.queryObject("ROLLBACK");
             throw error;
         }
     }
@@ -110,23 +110,26 @@ export class RecipeInserter {
 
         // Then insert all recipe-ingredient relationships in one batch
         const values = ingredients.map((ingredient, index) =>
-            `($1, (SELECT ingredient_id FROM ingredients WHERE name = $2), $3, $4, $5, $6)`
+            `($1, (SELECT ingredient_id FROM ingredients WHERE name = $${2 + index * 5}), 
+        $${3 + index * 5}, $${4 + index * 5}, $${5 + index * 5}, $${6 + index * 5})`
         ).join(',');
+
+        const params = [
+            this.recipeId,
+            ...ingredients.flatMap((ingredient, index) => [
+                ingredient.name,
+                ingredient.quantity,
+                ingredient.unit,
+                ingredient.notes,
+                ingredient.sort_order ?? index + 1
+            ])
+        ];
 
         await this.client.queryArray(
             `INSERT INTO recipe_ingredients (
             recipe_id, ingredient_id, quantity, unit, notes, sort_order
         ) VALUES ${values}`,
-            [
-                this.recipeId,
-                ...ingredients.flatMap(ingredient => [
-                    ingredient.name,
-                    ingredient.quantity,
-                    ingredient.unit,
-                    ingredient.notes,
-                    ingredient.sort_order ?? index + 1
-                ])
-            ]
+            params
         );
     }
 

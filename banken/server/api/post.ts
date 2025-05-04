@@ -6,7 +6,6 @@ import { Http } from "../wrapper.ts";
 import { LoginSchema } from "./login-attempt.ts";
 import { getUserByNameOrEmail } from "../../db/user.ts";
 import { generateRefreshToken, generateToken } from "../../jwt/jwt.ts";
-import { userInfo } from "node:os";
 import { Role } from "../../acm/permission.ts";
 
 /*
@@ -70,7 +69,7 @@ export async function postLogin(req: Request): Promise<Response> {
             email: queryResult.email,
             role: queryResult.role as Role,
         };
-
+        console.log(`user: ${user}`);
         const correctPassword = await bcrypt.compare(
             login.password,
             queryResult?.password_hash,
