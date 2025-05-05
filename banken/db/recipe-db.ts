@@ -47,6 +47,7 @@ export const RecentRecipeSchema = z.object({
     id: z.number().nonnegative(),
     title: z.string().min(1),
     prepTime: z.number().nonnegative(),
+    coverImage: z.string().min(1),
     addedAgo: z.string(), // You could add a regex if you want to validate format
     categories: z.array(CategorySchema),
 });

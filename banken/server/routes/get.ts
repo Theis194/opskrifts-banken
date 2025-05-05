@@ -31,7 +31,6 @@ export async function getIndex(
     const isLoggedIn = user ? true : false;
     const recipes = await getFeaturedRecipes(Http.client);
     const recentlyAdded = await getRecentlyAdded(Http.client);
-    console.log(recentlyAdded);
 
     const data = { isAdmin, isLoggedIn, recipes, recentlyAdded };
 

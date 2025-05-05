@@ -122,6 +122,7 @@ type RecentRecipeRow = {
     id: number,
     title: string;
     prep_time: number;
+    cover_image_path: string;
     added_ago: string;
     categories: string | null;
 };
@@ -133,6 +134,7 @@ export async function getRecentlyAdded(client: Client) {
     r.title,
     r.prep_time,
     r.recipe_id,
+    r.cover_image_path,
     CASE
       WHEN CURRENT_DATE - r.created_at::date = 0 THEN 'Today'
       WHEN CURRENT_DATE - r.created_at::date = 1 THEN '1 day ago'
@@ -167,6 +169,7 @@ export async function getRecentlyAdded(client: Client) {
             try {
                 const recipeData = {
                     id: row.recipe_id,
+                    coverImage: row.cover_image_path,
                     title: row.title,
                     prepTime: row.prep_time,
                     addedAgo: row.added_ago,

@@ -14,7 +14,11 @@
 } %>
 
 <div class="card bg-base-100 shadow-xl">
-  <figure><img src="<%= it.coverImage || 'https://images.unsplash.com/photo-1546069901-d5bfd2cbfb1f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80' %>" alt="<%= it.title %>" class="h-48 w-full object-cover" /></figure>
+  <% if (it.recipe.coverImage) {%>
+    <figure><img src="..<%= it.recipe.coverImage %>" alt="<%= it.recipe.title %>" class="h-48 w-full object-cover"></figure>
+  <% } else { %>
+  <figure><img src="https://images.unsplash.com/photo-1546069901-d5bfd2cbfb1f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80" alt="<%= it.recipe.title %>" class="h-48 w-full object-cover" /></figure>
+  <% } %>
   <div class="card-body">
     <h3 class="card-title"><%= it.recipe.title %></h3>
     <div class="flex flex-wrap gap-2 mb-2">
