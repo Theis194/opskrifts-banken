@@ -1,5 +1,5 @@
 import { Http } from "./banken/server/wrapper.ts";
-import { getAddRecipe, getIndex, getRecipePage } from "./banken/server/routes/get.ts";
+import { getAddRecipe, getIndex, getRecipePage, getAdmin, getAdminAddRecipe } from "./banken/server/routes/get.ts";
 import { postLogin, postLogout, postNewRecipe } from "./banken/server/api/post.ts";
 
 const server = await Http.create("./banken/public");
@@ -20,6 +20,20 @@ server
             resource: "recipe",
             permission: "write",
         },
+    })
+    .addRoute("GET", "/admin", getAdmin, {
+        requireAuth: true,
+        acm: {
+            resource: "admin",
+            permission: "read",
+        }
+    })
+    .addRoute("GET", "/admin/recipes/new", getAdminAddRecipe, {
+        requireAuth: true,
+        acm: {
+            resource: "admin",
+            permission: "write",
+        }
     })
     .addRoute("POST", "/api/login", postLogin, { requireAuth: false })
     .addRoute("POST", "/api/logout", postLogout, { requireAuth: false })

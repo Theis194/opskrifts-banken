@@ -15,7 +15,6 @@ export async function exampleRouteFunction(
   req: Request,
   user: SafeUser,
   params: QueryParams,
-  } | undefined,
 ): Promise<Response> {
 }
  */
@@ -54,17 +53,45 @@ export async function getAddRecipe(
 }
 
 export async function getRecipePage(
-    req: Request,
+    _req: Request,
     user: SafeUser,
     params: QueryParams,
 ): Promise<Response> {
     const isAdmin = user
         ? hasRessourcePermission(user.role, "recipe", "read")
         : false;
+    const isLoggedIn = user ? true : false;
     const recipeId = Number(params.id);
     const recipe = await getRecipeById(Http.client, recipeId);
 
-    const data = { isAdmin, recipe };
+    const data = { isAdmin, isLoggedIn, recipe };
 
     return await Http.renderTemplate("recipe", data);
+}
+
+export async function getAdmin(
+    _req: Request,
+    user: SafeUser,
+    _params: QueryParams,
+): Promise<Response> {
+    const isAdmin = hasRessourcePermission(user.role, "admin", "read");
+    const isLoggedIn = user ? true : false;
+
+    const data = { isAdmin, isLoggedIn };
+
+    return await Http.renderTemplate("admin", data);
+}
+
+export async function getAdminAddRecipe(
+    _req: Request,
+    user: SafeUser,
+    _params: QueryParams,
+): Promise<Response> {
+    const ingredients = await getKnownIngredients(Http.client);
+    const categories = await getKnownCategories(Http.client);
+    const tags = await getKnownTags(Http.client);
+
+    const data = { ingredients, categories, tags };
+
+    return await Http.renderTemplate("/partials/add_recipe", data);
 }
