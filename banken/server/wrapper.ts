@@ -16,16 +16,23 @@ import {
 } from "../acm/permission.ts";
 import { SafeUser } from "../db/user-db.ts";
 
+
+type HttpMethods = "GET" | "POST" | "PUT" | "DELETE";
+
+export type QueryParams = Record<string, string | string[]>;
+
 // For authenticated routes
 type AuthenticatedHandler = (
     req: Request,
     user: SafeUser, // No longer optional
+    params: QueryParams,
 ) => Promise<Response>;
 
 // For public routes
 type PublicHandler = (
     req: Request,
     user?: SafeUser, // Still optional
+    params: QueryParams,
 ) => Promise<Response>;
 
 export class Http {
@@ -83,6 +90,9 @@ export class Http {
         } = { requireAuth: true },
     ): Http {
         this.handlers[method][path] = async (req: Request) => {
+            const url = new URL(req.url);
+            const params = Http.parseQueryParams(url);
+
             // Always run auth middleware to get user if available
             const { user, response } = await Http.authMiddleware(req);
 
@@ -106,9 +116,9 @@ export class Http {
 
             // Call handler with appropriate parameters
             if (options.requireAuth) {
-                return (handler as AuthenticatedHandler)(req, user!); // We know user exists here
+                return (handler as AuthenticatedHandler)(req, user!, params); // We know user exists here
             } else {
-                return (handler as PublicHandler)(req, user || undefined);
+                return (handler as PublicHandler)(req, user || undefined, params);
             }
         };
         return this;
@@ -211,6 +221,23 @@ export class Http {
         });
     }
 
+    static parseQueryParams(url: URL): QueryParams {
+        const params: QueryParams = {};
+        url.searchParams.forEach((value, key) => {
+            if (params[key]) {
+                // If the key already exists, convert to array or push to existing array
+                if (Array.isArray(params[key])) {
+                    (params[key] as string[]).push(value);
+                } else {
+                    params[key] = [params[key] as string, value];
+                }
+            } else {
+                params[key] = value;
+            }
+        });
+        return params;
+    }
+
     serve() {
         Deno.serve(async (req) => {
             const url = new URL(req.url);
@@ -236,4 +263,3 @@ export class Http {
     }
 }
 
-type HttpMethods = "GET" | "POST" | "PUT" | "DELETE";

@@ -274,3 +274,114 @@ export async function getKnownTags(client: Client): Promise<Map<string, string>>
         throw error;
     }
 }
+
+export async function getRecipeById(client: Client, id: number) {
+    const query = `
+        SELECT 
+            r.recipe_id,
+            r.title,
+            r.description,
+            r.prep_time,
+            r.cook_time,
+            r.servings,
+            r.difficulty,
+            r.cover_image_path,
+            u.username AS author,
+            r.created_at,
+            r.updated_at,
+            (
+                SELECT 
+                    COALESCE(
+                        JSONB_AGG(
+                            JSONB_BUILD_OBJECT(
+                                'name', c.name, 
+                                'icon', COALESCE(c.icon_class, '')
+                            )
+                        ),
+                        '[]'::jsonb
+                    )
+                FROM recipe_categories rc
+                JOIN categories c ON rc.category_id = c.category_id
+                WHERE rc.recipe_id = r.recipe_id
+            ) AS categories,
+            (
+                SELECT 
+                    COALESCE(
+                        JSONB_AGG(
+                            JSONB_BUILD_OBJECT(
+                                'name', t.name, 
+                                'color', COALESCE(t.color, '#999999')
+                            )
+                        ),
+                        '[]'::jsonb
+                    )
+                FROM recipe_tags rt
+                JOIN tags t ON rt.tag_id = t.tag_id
+                WHERE rt.recipe_id = r.recipe_id
+            ) AS tags,
+            (
+                SELECT 
+                    COALESCE(
+                        JSONB_AGG(
+                            JSONB_BUILD_OBJECT(
+                                'id', i.ingredient_id,
+                                'name', i.name,
+                                'quantity', ri.quantity,
+                                'unit', ri.unit,
+                                'notes', COALESCE(ri.notes, '')
+                            ) ORDER BY ri.sort_order
+                        ),
+                        '[]'::jsonb
+                    )
+                FROM recipe_ingredients ri
+                JOIN ingredients i ON ri.ingredient_id = i.ingredient_id
+                WHERE ri.recipe_id = r.recipe_id
+            ) AS ingredients
+        FROM 
+            recipes r
+        JOIN
+            users u ON r.user_id = u.user_id
+        WHERE
+            r.recipe_id = $1
+        LIMIT 1
+    `;
+
+    try {
+        const result = await client.queryObject<Recipe>({
+            text: query,
+            args: [id]
+        });
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        const dbRecipe = result.rows[0];
+
+        // Transform the database fields to match your Zod schema
+        const transformedRecipe = {
+            id: dbRecipe.recipe_id,
+            title: dbRecipe.title,
+            description: dbRecipe.description || undefined,
+            prepTime: dbRecipe.prep_time,
+            cookTime: dbRecipe.cook_time,
+            servings: dbRecipe.servings,
+            difficulty: dbRecipe.difficulty,
+            coverImage: dbRecipe.cover_image_path || undefined,
+            author: dbRecipe.author,
+            categories: dbRecipe.categories || [],
+            tags: dbRecipe.tags || [],
+            ingredients: dbRecipe.ingredients ? dbRecipe.ingredients.map(ing => ({
+                ...ing,
+                unit: ing.unit || undefined // Convert null/empty to undefined
+            })) : [],
+            createdAt: dbRecipe.created_at,
+            updatedAt: dbRecipe.updated_at
+        };
+
+        return RecipeSchema.parse(transformedRecipe);
+    } catch (error) {
+        console.error(`Error fetching recipe with id: ${id}`, error);
+        throw error;
+    }
+}
