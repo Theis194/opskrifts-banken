@@ -24,6 +24,6 @@
   <td><%= it.recipe.prepTime %>m</td>
   <td><%= it.recipe.addedAgo.replace('.0', '') %></td>
   <th>
-    <button class="btn btn-ghost btn-xs">details</button>
+    <a href="/recipe?id=<%= it.recipe.id %>" class="btn btn-ghost btn-xs">details</a>
   </th>
 </tr>

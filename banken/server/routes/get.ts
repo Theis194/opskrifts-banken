@@ -31,6 +31,7 @@ export async function getIndex(
     const isLoggedIn = user ? true : false;
     const recipes = await getFeaturedRecipes(Http.client);
     const recentlyAdded = await getRecentlyAdded(Http.client);
+    console.log(recentlyAdded);
 
     const data = { isAdmin, isLoggedIn, recipes, recentlyAdded };
 
@@ -63,7 +64,6 @@ export async function getRecipePage(
         : false;
     const recipeId = Number(params.id);
     const recipe = await getRecipeById(Http.client, recipeId);
-    console.log(recipe);
 
     const data = { isAdmin, recipe };
 

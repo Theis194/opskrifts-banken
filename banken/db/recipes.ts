@@ -119,6 +119,7 @@ export async function getFeaturedRecipes(client: Client) {
 }
 
 type RecentRecipeRow = {
+    id: number,
     title: string;
     prep_time: number;
     added_ago: string;
@@ -131,6 +132,7 @@ export async function getRecentlyAdded(client: Client) {
   SELECT 
     r.title,
     r.prep_time,
+    r.recipe_id,
     CASE
       WHEN CURRENT_DATE - r.created_at::date = 0 THEN 'Today'
       WHEN CURRENT_DATE - r.created_at::date = 1 THEN '1 day ago'
@@ -164,6 +166,7 @@ export async function getRecentlyAdded(client: Client) {
         for (const row of rows) {
             try {
                 const recipeData = {
+                    id: row.recipe_id,
                     title: row.title,
                     prepTime: row.prep_time,
                     addedAgo: row.added_ago,
