@@ -278,72 +278,88 @@ export async function getKnownTags(client: Client): Promise<Map<string, string>>
 export async function getRecipeById(client: Client, id: number) {
     const query = `
         SELECT 
-            r.recipe_id,
-            r.title,
-            r.description,
-            r.prep_time,
-            r.cook_time,
-            r.servings,
-            r.difficulty,
-            r.cover_image_path,
-            u.username AS author,
-            r.created_at,
-            r.updated_at,
-            (
-                SELECT 
-                    COALESCE(
-                        JSONB_AGG(
-                            JSONB_BUILD_OBJECT(
-                                'name', c.name, 
-                                'icon', COALESCE(c.icon_class, '')
-                            )
-                        ),
-                        '[]'::jsonb
+    r.recipe_id,
+    r.title,
+    r.description,
+    r.prep_time,
+    r.cook_time,
+    r.servings,
+    r.difficulty,
+    r.cover_image_path,
+    u.username AS author,
+    r.created_at,
+    r.updated_at,
+    (
+        SELECT 
+            COALESCE(
+                JSONB_AGG(
+                    JSONB_BUILD_OBJECT(
+                        'name', c.name, 
+                        'icon', COALESCE(c.icon_class, '')
                     )
-                FROM recipe_categories rc
-                JOIN categories c ON rc.category_id = c.category_id
-                WHERE rc.recipe_id = r.recipe_id
-            ) AS categories,
-            (
-                SELECT 
-                    COALESCE(
-                        JSONB_AGG(
-                            JSONB_BUILD_OBJECT(
-                                'name', t.name, 
-                                'color', COALESCE(t.color, '#999999')
-                            )
-                        ),
-                        '[]'::jsonb
+                ),
+                '[]'::jsonb
+            )
+        FROM recipe_categories rc
+        JOIN categories c ON rc.category_id = c.category_id
+        WHERE rc.recipe_id = r.recipe_id
+    ) AS categories,
+    (
+        SELECT 
+            COALESCE(
+                JSONB_AGG(
+                    JSONB_BUILD_OBJECT(
+                        'name', t.name, 
+                        'color', COALESCE(t.color, '#999999')
                     )
-                FROM recipe_tags rt
-                JOIN tags t ON rt.tag_id = t.tag_id
-                WHERE rt.recipe_id = r.recipe_id
-            ) AS tags,
-            (
-                SELECT 
-                    COALESCE(
-                        JSONB_AGG(
-                            JSONB_BUILD_OBJECT(
-                                'id', i.ingredient_id,
-                                'name', i.name,
-                                'quantity', ri.quantity,
-                                'unit', ri.unit,
-                                'notes', COALESCE(ri.notes, '')
-                            ) ORDER BY ri.sort_order
-                        ),
-                        '[]'::jsonb
-                    )
-                FROM recipe_ingredients ri
-                JOIN ingredients i ON ri.ingredient_id = i.ingredient_id
-                WHERE ri.recipe_id = r.recipe_id
-            ) AS ingredients
-        FROM 
-            recipes r
-        JOIN
-            users u ON r.user_id = u.user_id
-        WHERE
-            r.recipe_id = $1
-        LIMIT 1
+                ),
+                '[]'::jsonb
+            )
+        FROM recipe_tags rt
+        JOIN tags t ON rt.tag_id = t.tag_id
+        WHERE rt.recipe_id = r.recipe_id
+    ) AS tags,
+    (
+        SELECT 
+            COALESCE(
+                JSONB_AGG(
+                    JSONB_BUILD_OBJECT(
+                        'id', i.ingredient_id,
+                        'name', i.name,
+                        'quantity', ri.quantity,
+                        'unit', ri.unit,
+                        'notes', COALESCE(ri.notes, '')
+                    ) ORDER BY ri.sort_order
+                ),
+                '[]'::jsonb
+            )
+        FROM recipe_ingredients ri
+        JOIN ingredients i ON ri.ingredient_id = i.ingredient_id
+        WHERE ri.recipe_id = r.recipe_id
+    ) AS ingredients,
+    (
+        SELECT 
+            COALESCE(
+                JSONB_AGG(
+                    JSONB_BUILD_OBJECT(
+                        'id', ins.instruction_id,
+                        'stepNumber', ins.step_number,
+                        'instructionText', ins.instruction_text,
+                        'imagePath', COALESCE(ins.image_path, '')
+                    ) ORDER BY ins.step_number
+                ),
+                '[]'::jsonb
+            )
+        FROM instructions ins
+        WHERE ins.recipe_id = r.recipe_id
+    ) AS instructions
+FROM 
+    recipes r
+JOIN
+    users u ON r.user_id = u.user_id
+WHERE
+    r.recipe_id = $1
+LIMIT 1
     `;
 
     try {
@@ -374,6 +390,12 @@ export async function getRecipeById(client: Client, id: number) {
             ingredients: dbRecipe.ingredients ? dbRecipe.ingredients.map(ing => ({
                 ...ing,
                 unit: ing.unit || undefined // Convert null/empty to undefined
+            })) : [],
+            instructions: dbRecipe.instructions ? dbRecipe.instructions.map(ins => ({
+                id: ins.id,
+                stepNumber: ins.stepNumber,
+                instructionText: ins.instructionText,
+                imagePath: ins.imagePath || undefined
             })) : [],
             createdAt: dbRecipe.created_at,
             updatedAt: dbRecipe.updated_at

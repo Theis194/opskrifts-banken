@@ -18,6 +18,13 @@ const IngredientSchema = z.object({
     notes: z.string().optional()
 });
 
+const InstructionSchema = z.object({
+    id: z.number().positive(),
+    stepNumber: z.number().positive(),
+    instructionText: z.string().min(1),
+    imagePath: z.string().optional(),
+});
+
 export const RecipeSchema = z.object({
     id: z.number().positive(),
     title: z.string().min(1),
@@ -31,6 +38,7 @@ export const RecipeSchema = z.object({
     categories: z.array(CategorySchema),
     ingredients: z.array(IngredientSchema).optional(),
     tags: z.array(TagSchema),
+    instructions: z.array(InstructionSchema).optional(),
     createdAt: z.preprocess((val) => val instanceof Date ? val.toISOString() : val, z.string().optional()),
     updatedAt: z.preprocess((val) => val instanceof Date ? val.toISOString() : val, z.string().optional()),
 });
