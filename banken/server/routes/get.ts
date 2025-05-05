@@ -1,10 +1,11 @@
-import { Http } from "../wrapper.ts";
+import { Http, QueryParams } from "../wrapper.ts";
 import {
     getFeaturedRecipes,
     getKnownCategories,
     getKnownIngredients,
     getKnownTags,
     getRecentlyAdded,
+    getRecipeById,
 } from "../../db/recipes.ts";
 import { SafeUser } from "../../db/user-db.ts";
 import { hasRessourcePermission } from "../../acm/permission.ts";
@@ -12,10 +13,8 @@ import { hasRessourcePermission } from "../../acm/permission.ts";
 /*
 export async function exampleRouteFunction(
   req: Request,
-  user: {
-    email: string;
-    username: string;
-    role: Role;
+  user: SafeUser,
+  params: QueryParams,
   } | undefined,
 ): Promise<Response> {
 }
@@ -24,6 +23,7 @@ export async function exampleRouteFunction(
 export async function getIndex(
     _req: Request,
     user: SafeUser,
+    _params: QueryParams,
 ): Promise<Response> {
     const isAdmin = user
         ? hasRessourcePermission(user.role, "recipe", "read")
@@ -40,6 +40,7 @@ export async function getIndex(
 export async function getAddRecipe(
     _req: Request,
     user: SafeUser,
+    _params: QueryParams,
 ): Promise<Response> {
     const isAdmin = hasRessourcePermission(user.role, "recipe", "read");
     const isLoggedIn = user ? true : false;
@@ -50,4 +51,21 @@ export async function getAddRecipe(
     const data = { isAdmin, isLoggedIn, ingredients, categories, tags };
 
     return await Http.renderTemplate("addRecipe", data);
+}
+
+export async function getRecipePage(
+    req: Request,
+    user: SafeUser,
+    params: QueryParams,
+): Promise<Response> {
+    const isAdmin = user
+        ? hasRessourcePermission(user.role, "recipe", "read")
+        : false;
+    const recipeId = Number(params.id);
+    const recipe = await getRecipeById(Http.client, recipeId);
+    console.log(recipe);
+
+    const data = { isAdmin, recipe };
+
+    return await Http.renderTemplate("recipe", data);
 }

@@ -1,11 +1,12 @@
 import { Http } from "./banken/server/wrapper.ts";
-import { getAddRecipe, getIndex } from "./banken/server/routes/get.ts";
+import { getAddRecipe, getIndex, getRecipePage } from "./banken/server/routes/get.ts";
 import { postLogin, postLogout, postNewRecipe } from "./banken/server/api/post.ts";
 
 const server = await Http.create("./banken/public");
 
 server
     .addRoute("GET", "/", getIndex, { requireAuth: false })
+    .addRoute("GET", "/recipe", getRecipePage, { requireAuth: false })
     .addRoute("GET", "/tilfoj-opskrift", getAddRecipe, {
         requireAuth: true,
         acm: {
