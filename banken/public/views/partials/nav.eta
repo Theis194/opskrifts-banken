@@ -17,7 +17,7 @@
   <div class="navbar-center hidden lg:flex">
     <ul class="menu menu-horizontal px-1">
       <li><a href="/"><i class="fas fa-home mr-2"></i>Home</a></li>
-      <li><a href="/"><i class="fas fa-book mr-2"></i>All Recipes</a></li>
+      <li><a href="/all-recipes"><i class="fas fa-book mr-2"></i>All Recipes</a></li>
       <li tabindex="0">
         <details>
           <summary><i class="fas fa-tags mr-2"></i>Categories</summary>

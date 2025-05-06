@@ -1,4 +1,5 @@
 import { Http, QueryParams } from "../wrapper.ts";
+import { GetPaginatedRecipes, TotalRecipesCount, SearchRecipes, TotalSearchCount } from "../../db/allRecipe.ts";
 import {
     getFeaturedRecipes,
     getKnownCategories,
@@ -68,30 +69,107 @@ export async function getRecipePage(
 
     return await Http.renderTemplate("recipe", data);
 }
+const RECIPES_PER_PAGE = 12;
 
-export async function getAdmin(
+export async function getRecipesPage(
     _req: Request,
     user: SafeUser,
-    _params: QueryParams,
+    params: QueryParams,
 ): Promise<Response> {
-    const isAdmin = hasRessourcePermission(user.role, "admin", "read");
-    const isLoggedIn = user ? true : false;
+    const client = Http.client;
 
-    const data = { isAdmin, isLoggedIn };
+    const isAdmin = user
+        ? hasRessourcePermission(user.role, "recipe", "read")
+        : false;
 
-    return await Http.renderTemplate("admin", data);
+    let page = Number(params.page);
+    if (Number.isNaN(page) || page < 1) page = 1;
+
+    const [recipes, total] = await Promise.all([
+        await GetPaginatedRecipes(client, page),
+        await TotalRecipesCount(client)
+    ]);
+
+    const totalPages = Math.ceil(total / RECIPES_PER_PAGE);
+
+    const data = {
+        isAdmin,
+        recipes,
+        pagination: {
+            currentPage: page,
+            totalPages,
+        }
+    };
+
+    return Http.renderTemplate("partials/view_recipe", data);
 }
 
-export async function getAdminAddRecipe(
+export async function searchRecipes(
     _req: Request,
     user: SafeUser,
-    _params: QueryParams,
+    params: QueryParams,
 ): Promise<Response> {
-    const ingredients = await getKnownIngredients(Http.client);
-    const categories = await getKnownCategories(Http.client);
-    const tags = await getKnownTags(Http.client);
+    const client = Http.client;
 
-    const data = { ingredients, categories, tags };
+    const isAdmin = user
+        ? hasRessourcePermission(user.role, "recipe", "read")
+        : false;
 
-    return await Http.renderTemplate("/partials/add_recipe", data);
+    const search = params.query as string;
+    let page = Number(params.page);
+    if (Number.isNaN(page) || page < 1) page = 1;
+
+    const [recipes, total] = await Promise.all([
+        SearchRecipes(client, search, page),
+        TotalSearchCount(client, search)
+    ]);
+
+    const totalPages = Math.ceil(total / RECIPES_PER_PAGE);
+
+    const data = {
+        isAdmin,
+        recipes,
+        pagination: {
+            currentPage: page,
+            totalPages,
+        }
+    }
+
+    return Http.renderTemplate("partials/recipe_list", data);
+}
+
+export async function getAllRecipesPage(
+    _req: Request,
+    user: SafeUser,
+    params: QueryParams,
+): Promise<Response> {
+    const client = Http.client;
+
+    const isAdmin = user
+        ? hasRessourcePermission(user.role, "recipe", "read")
+        : false;
+
+    const isLoggedIn = user ? true : false;
+
+    let page = Number(params.page);
+    if (Number.isNaN(page) || page < 1) page = 1;
+
+    const [recipes, total] = await Promise.all([
+        await GetPaginatedRecipes(client, page),
+        await TotalRecipesCount(client)
+    ]);
+
+    const totalPages = Math.ceil(total / RECIPES_PER_PAGE);
+
+    const data = {
+        isAdmin,
+        isLoggedIn,
+        recipes,
+        pagination: {
+            currentPage: page,
+            totalPages,
+        }
+    };
+
+    return Http.renderTemplate("allRecipes", data);
 }
