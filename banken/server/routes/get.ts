@@ -69,6 +69,7 @@ export async function getRecipePage(
 
     return await Http.renderTemplate("recipe", data);
 }
+
 const RECIPES_PER_PAGE = 12;
 
 export async function getRecipesPage(
@@ -116,6 +117,8 @@ export async function searchRecipes(
         : false;
 
     const search = params.query as string;
+    console.log("Search: " + search)
+
     let page = Number(params.page);
     if (Number.isNaN(page) || page < 1) page = 1;
 

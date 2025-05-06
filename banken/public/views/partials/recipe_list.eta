@@ -30,7 +30,15 @@
             <span class="badge badge-outline">
               <i class="fas fa-signal mr-1"></i> <%= recipe.difficulty %>
             </span>
-          <% } %>
+          <% } %> 
+        </div>
+        
+        <div class="flex flex-wrap gap-2 mt-2">
+          <% recipe.tags.forEach(function(tag) { %>
+            <span class="badge" style="background-color: <%= tag.color %>; border: none; color: white">
+                <%= tag.name %>
+            </span>
+          <% }); %>
         </div>
 
         <!-- Actions -->
