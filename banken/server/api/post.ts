@@ -2,20 +2,18 @@ import { z } from "zod";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { RecipeSchema } from "./recipe-create.ts";
 import { RecipeInserter } from "../../db/recipeInserter.ts";
-import { Http } from "../wrapper.ts";
+import { Http, QueryParams } from "../wrapper.ts";
 import { LoginSchema } from "./login-attempt.ts";
-import { getUserByNameOrEmail } from "../../db/user.ts";
+import { createUser, getUserByNameOrEmail, NewUser } from "../../db/user.ts";
 import { generateRefreshToken, generateToken } from "../../jwt/jwt.ts";
 import { Role } from "../../acm/permission.ts";
+import { SafeUser } from "../../db/user-db.ts";
 
 /*
 export async function exampleRouteFunction(
   req: Request,
-  user: {
-    email: string;
-    username: string;
-    role: Role;
-  } | undefined,
+  user: SafeUser,
+  params: QueryParams,
 ): Promise<Response> {
 }
  */
@@ -62,18 +60,20 @@ export async function postLogin(req: Request): Promise<Response> {
         };
 
         const login = LoginSchema.parse(parsedLogin);
-
+        console.log(login);
         const queryResult = await getUserByNameOrEmail(Http.client, login.username);
         const user = {
             username: queryResult.username,
             email: queryResult.email,
             role: queryResult.role as Role,
         };
-        console.log(`user: ${user}`);
+        console.log(user);
+
         const correctPassword = await bcrypt.compare(
             login.password,
             queryResult?.password_hash,
         );
+
         if (correctPassword) {
             const token = generateToken(user);
 
@@ -92,7 +92,7 @@ export async function postLogin(req: Request): Promise<Response> {
             );
 
             return new Response(null, {
-                status: 302, // 302 redirect
+                status: 200, // 302 redirect
                 headers,
             });
         } else {
@@ -107,10 +107,7 @@ export async function postLogin(req: Request): Promise<Response> {
             return Response.json(
                 {
                     error: "Validation failed",
-                    issues: error.errors.map((err) => ({
-                        path: err.path.join("."),
-                        message: err.message,
-                    })),
+                    issues: "Username or Password invalid",
                 },
                 { status: 400 },
             );
@@ -122,7 +119,7 @@ export async function postLogin(req: Request): Promise<Response> {
     }
 }
 
-export async function postLogout(req: Request): Promise<Response> {
+export async function postLogout(_req: Request): Promise<Response> {
     return new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: {
@@ -132,4 +129,32 @@ export async function postLogout(req: Request): Promise<Response> {
                 `refreshToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly`
         }
     });
+}
+
+export async function postCreateUser(
+    req: Request,
+    _user: SafeUser,
+    _params: QueryParams,
+): Promise<Response> {
+    const rawData = await req.formData()
+    const data = await Http.formdataToObject(rawData);
+
+    const newUser: NewUser = { username: data.name as string, email: data.email as string, password: data.password as string, role: data.role as string };
+
+    let issues = { nameError: "", passwordError: "" };
+    if (newUser.username.length < 3) {
+        issues.nameError = "Username must be longer than 3";
+    }
+
+    if (newUser.password.length < 5) {
+        issues.passwordError = "Password must be longer than 5";
+    }
+
+    if (issues.nameError !== "" || issues.passwordError !== "") {
+        return new Response(JSON.stringify({ success: false, issues }), { status: 422 });
+    }
+
+    const result = await createUser(Http.client, newUser);
+
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
 }

@@ -43,3 +43,10 @@ export async function getAdminAddRecipe(
     return await Http.renderTemplate("/partials/add_recipe", data);
 }
 
+export async function getCreateUser(
+    _req: Request,
+    _user: SafeUser,
+    _params: QueryParams,
+): Promise<Response> {
+    return Http.renderTemplate("/partials/create_user");
+}

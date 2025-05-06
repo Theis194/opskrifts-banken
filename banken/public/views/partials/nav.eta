@@ -94,7 +94,18 @@
 <dialog id="login_modal" class="modal">
   <div class="modal-box">
     <h3 class="font-bold text-lg mb-4">Login to Your Account</h3>
-    <form action="/api/login" method="post" enctype="application/x-www-form-urlencoded" class="space-y-4">
+
+    <!-- Error message container (initially hidden) -->
+    <div id="login_error" class="hidden mb-4">
+      <div class="alert alert-error">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span id="error_message"></span>
+      </div>
+    </div>
+
+    <form id="login_form" action="/api/login" method="post" enctype="application/x-www-form-urlencoded" class="space-y-4">
       <div class="form-control">
         <label class="label" for="username">
           <span class="label-text">Username or Email</span>
@@ -117,16 +128,6 @@
       </div>
     </form>
 
-    <div class="divider">OR</div>
-
-    <div class="text-center">
-      <p class="text-sm">Don't have an account?
-        <a href="#" class="link link-primary" onclick="document.getElementById('login_modal').close(); document.getElementById('register_modal').showModal()">
-          Register here
-        </a>
-      </p>
-    </div>
-
     <div class="modal-action absolute top-2 right-2">
       <form method="dialog">
         <button class="btn btn-circle btn-ghost btn-sm">
@@ -142,19 +143,6 @@
   <form method="dialog" class="modal-backdrop">
     <button>close</button>
   </form>
-</dialog>
-
-<!-- Register Modal -->
-<dialog id="register_modal" class="modal">
-  <div class="modal-box">
-    <h3 class="font-bold text-lg">Register</h3>
-    <p class="py-4">Registration form would go here</p>
-    <div class="modal-action">
-      <form method="dialog">
-        <button class="btn">Close</button>
-      </form>
-    </div>
-  </div>
 </dialog>
 
 <script>
@@ -177,5 +165,71 @@
     } catch (error) {
       console.error('Error during logout:', error);
     }
+  }); 
+</script>
+
+<script>
+  document.getElementById('login_form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const errorContainer = document.getElementById('login_error');
+    const errorMessage = document.getElementById('error_message');
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    // Reset UI state
+    errorContainer.classList.add('hidden');
+    submitButton.disabled = true;
+    const originalButtonText = submitButton.innerHTML;
+    submitButton.innerHTML = '<span class="loading loading-spinner"></span> Logging in...';
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: new URLSearchParams(new FormData(form)),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        redirect: 'manual' // Important: prevent redirects
+      });
+
+      if (response.status === 200) {
+        // Successful login - handle redirect manually
+        const redirectUrl = response.headers.get('Location') || '/';
+        window.location.href = redirectUrl;
+      } else if (response.status === 400) {
+        // Handle validation errors
+        const result = await response.json();
+        // Display the error message
+        errorMessage.textContent = result.issues || 'Invalid input';
+        errorContainer.classList.remove('hidden');
+        
+        // Highlight problematic fields
+        if (result.field) {
+          const input = form.querySelector(`[name="${result.field}"]`);
+          if (input) {
+            input.classList.add('input-error');
+            input.focus();
+          }
+        }
+      } else {
+        // Other errors
+        errorMessage.textContent = 'Login failed. Please try again.';
+        errorContainer.classList.remove('hidden');
+      }
+    } catch (error) {
+      errorMessage.textContent = 'Network error. Please try again later.';
+      errorContainer.classList.remove('hidden');
+      console.error('Login error:', error);
+    } finally {
+      submitButton.disabled = false;
+      submitButton.innerHTML = originalButtonText;
+    }
+  });
+
+  // Remove error styling when user starts typing
+  document.querySelectorAll('#login_form input').forEach(input => {
+    input.addEventListener('input', () => {
+      input.classList.remove('input-error');
+    });
   });
 </script>

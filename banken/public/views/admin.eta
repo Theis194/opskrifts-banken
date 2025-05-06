@@ -81,18 +81,18 @@
 
                         <!-- Family Members Section -->
                         <li class="menu-title mt-4">
-                            <span>Family</span>
+                            <span>Users</span>
                         </li>
                         <li>
                             <a hx-get="/admin/family" hx-target="#content-area">
                                 <i class="fas fa-users mr-2"></i>
-                                Family Members
+                                Manage Users
                             </a>
                         </li>
                         <li>
-                            <a hx-get="/admin/family/invite" hx-target="#content-area">
-                                <i class="fas fa-envelope mr-2"></i>
-                                Invite Family
+                            <a hx-get="/admin/user/new" hx-target="#content-area">
+                                <i class="fas fa-user-plus mr-2"></i>
+                                Create User
                             </a>
                         </li>
                     </ul>

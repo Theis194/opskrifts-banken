@@ -1,3 +1,4 @@
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { Client } from "jsr:@db/postgres";
 import { User, UserSchema } from "./user-db.ts";
 import { Role } from "../acm/permission.ts";
@@ -51,3 +52,26 @@ export async function getUserByNameOrEmail(
         throw error; // Or consider returning null/undefined
     }
 }
+
+export type NewUser = {
+    username: string;
+    email: string;
+    password: string;
+    role: string;
+}
+export async function createUser(client: Client, newUser: NewUser) {
+    const query = `
+        INSERT INTO users (username, email, password_hash, role) VALUES 
+        ($1, $2, $3, $4)
+    `;
+    try {
+        const hashedPassword = await bcrypt.hash(newUser.password);
+        const result = await client.queryObject(query, [newUser.username, newUser.email, hashedPassword, newUser.role]);
+
+        return result;
+    } catch (error) {
+        console.error("Failed to create new user", error);
+        throw error;
+    }
+}
+
