@@ -9,7 +9,7 @@ export const UserSchema = z.object({
     created_at: z.coerce.date(), // Better to handle as Date object
     last_login: z.coerce.date().optional(), // Mark as optional if it can be null
     role: z.string().refine((val): val is Role =>
-        ["admin", "user", "guest"].includes(val)
+        ["admin", "editor", "user", "guest"].includes(val)
     ),
 });
 

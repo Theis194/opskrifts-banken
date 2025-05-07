@@ -1,0 +1,65 @@
+    <% it.recipes.forEach(recipe => { %>
+    <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-200">
+      <!-- Cover Image -->
+      <figure class="h-48 overflow-hidden">
+        <% if (recipe.coverImage) { %>
+          <img 
+            src="<%= recipe.coverImage %>" 
+            alt="<%= recipe.title %>" 
+            class="w-full h-full object-cover"
+          />
+        <% } else { %>
+          <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+            <i class="fas fa-utensils text-4xl text-gray-400"></i>
+          </div>
+        <% } %>
+      </figure>
+
+      <!-- Card Body -->
+      <div class="card-body p-4">
+        <h3 class="card-title text-lg font-semibold truncate"><%= recipe.title %></h3>
+        
+        <!-- Metadata -->
+        <div class="flex flex-wrap gap-2 mt-2">
+          <% if (recipe.prepTime) { %>
+            <span class="badge badge-outline">
+              <i class="fas fa-clock mr-1"></i> <%= recipe.prepTime + recipe.cookTime %> min
+            </span>
+          <% } %>
+          <% if (recipe.difficulty) { %>
+            <span class="badge badge-outline">
+              <i class="fas fa-signal mr-1"></i> <%= recipe.difficulty %>
+            </span>
+          <% } %> 
+        </div>
+        
+        <div class="flex flex-wrap gap-2 mt-2">
+          <% recipe.tags.forEach(function(tag) { %>
+            <span class="badge" style="background-color: <%= tag.color %>; border: none; color: white">
+                <%= tag.name %>
+            </span>
+          <% }); %>
+        </div>
+
+        <!-- Actions -->
+        <div class="card-actions justify-end mt-4">
+          <button 
+            class="btn btn-sm btn-ghost" 
+            hx-get="/admin/recipes/<%= recipe.id %>" 
+            hx-target="#content-area"
+          >
+            <i class="fas fa-eye"></i> View
+          </button>
+          <% if (it.isAdmin) {%>
+          <button 
+            class="btn btn-sm btn-primary" 
+            hx-get="/admin/recipes/<%= recipe.id %>/edit" 
+            hx-target="#content-area"
+          >
+            <i class="fas fa-edit"></i> Edit
+          </button>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <% }); %>

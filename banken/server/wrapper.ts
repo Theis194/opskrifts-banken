@@ -238,6 +238,25 @@ export class Http {
         return params;
     }
 
+    static async formdataToObject(formData: FormData): Promise<Record<string, unknown>> {
+        const result: Record<string, unknown> = {};
+
+        for (const [key, value] of formData.entries()) {
+            // Handle multiple values for the same key (like checkboxes)
+            if (result[key] !== undefined) {
+                if (Array.isArray(result[key])) {
+                    (result[key] as unknown[]).push(value);
+                } else {
+                    result[key] = [result[key], value];
+                }
+            } else {
+                result[key] = value;
+            }
+        }
+
+        return result;
+    }
+
     serve() {
         Deno.serve(async (req) => {
             const url = new URL(req.url);
