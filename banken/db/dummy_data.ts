@@ -767,9 +767,13 @@ async function insertDummyData() {
 }
 
 async function main() {
+    const dummy_data = (Deno.env.get("DUMMY_DATA") || env["DUMMY_DATA"]) === "true";
+    console.log("Dummy data: " + dummy_data)
     try {
         await createTables();
-        await insertDummyData();
+        if (dummy_data) {
+            await insertDummyData();
+        }
     } catch (error) {
         console.error("Error inserting data:", error);
     } finally {
