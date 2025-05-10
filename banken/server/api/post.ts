@@ -27,15 +27,7 @@ export async function postNewRecipe(ctx: HttpRequest): Promise<Response> {
     } catch (error) {
         console.error(error);
         if (error instanceof z.ZodError) {
-            ctx.res.json({
-                error: "Validation failed",
-                issues: error.errors.map((err) => ({
-                    path: err.path.join("."),
-                    message: err.message,
-                })),
-            },
-                { status: 400 });
-            return Response.json(
+            return ctx.res.json(
                 {
                     error: "Validation failed",
                     issues: error.errors.map((err) => ({
@@ -43,13 +35,10 @@ export async function postNewRecipe(ctx: HttpRequest): Promise<Response> {
                         message: err.message,
                     })),
                 },
-                { status: 400 }
+                400
             );
         }
-        return Response.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+        return ctx.res.json({ error: "Internal server error" }, 500);
     }
 }
 
