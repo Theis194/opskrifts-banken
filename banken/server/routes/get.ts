@@ -1,5 +1,10 @@
-import { Http, QueryParams } from "../wrapper.ts";
-import { GetPaginatedRecipes, TotalRecipesCount, SearchRecipes, TotalSearchCount } from "../../db/allRecipe.ts";
+import { Http, HttpRequest } from "../wrapper.ts";
+import {
+    GetPaginatedRecipes,
+    TotalRecipesCount,
+    SearchRecipes,
+    TotalSearchCount,
+} from "../../db/allRecipe.ts";
 import {
     getFeaturedRecipes,
     getKnownCategories,
@@ -8,27 +13,18 @@ import {
     getRecentlyAdded,
     getRecipeById,
 } from "../../db/recipes.ts";
-import { SafeUser } from "../../db/user-db.ts";
 import { hasRessourcePermission } from "../../acm/permission.ts";
 
 /*
-export async function exampleRouteFunction(
-  req: Request,
-  user: SafeUser,
-  params: QueryParams,
-): Promise<Response> {
+export async function exampleRouteFunction(ctx: HttpRequest): Promise<Response> {
 }
  */
 
-export async function getIndex(
-    _req: Request,
-    user: SafeUser,
-    _params: QueryParams,
-): Promise<Response> {
-    const isAdmin = user
-        ? hasRessourcePermission(user.role, "recipe", "read")
+export async function getIndex(ctx: HttpRequest): Promise<Response> {
+    const isAdmin = ctx.user
+        ? hasRessourcePermission(ctx.user.role, "recipe", "read")
         : false;
-    const isLoggedIn = user ? true : false;
+    const isLoggedIn = ctx.user ? true : false;
     const recipes = await getFeaturedRecipes(Http.client);
     const recentlyAdded = await getRecentlyAdded(Http.client);
 
@@ -37,13 +33,11 @@ export async function getIndex(
     return Http.renderTemplate("index.eta", data);
 }
 
-export async function getAddRecipe(
-    _req: Request,
-    user: SafeUser,
-    _params: QueryParams,
-): Promise<Response> {
-    const isAdmin = hasRessourcePermission(user.role, "recipe", "read");
-    const isLoggedIn = user ? true : false;
+export async function getAddRecipe(ctx: HttpRequest): Promise<Response> {
+    const isAdmin = ctx.user
+        ? hasRessourcePermission(ctx.user.role, "recipe", "read")
+        : false;
+    const isLoggedIn = ctx.user ? true : false;
     const ingredients = await getKnownIngredients(Http.client);
     const categories = await getKnownCategories(Http.client);
     const tags = await getKnownTags(Http.client);
@@ -53,16 +47,12 @@ export async function getAddRecipe(
     return await Http.renderTemplate("addRecipe", data);
 }
 
-export async function getRecipePage(
-    _req: Request,
-    user: SafeUser,
-    params: QueryParams,
-): Promise<Response> {
-    const isAdmin = user
-        ? hasRessourcePermission(user.role, "recipe", "read")
+export async function getRecipePage(ctx: HttpRequest): Promise<Response> {
+    const isAdmin = ctx.user
+        ? hasRessourcePermission(ctx.user.role, "recipe", "read")
         : false;
-    const isLoggedIn = user ? true : false;
-    const recipeId = Number(params.id);
+    const isLoggedIn = ctx.user ? true : false;
+    const recipeId = Number(ctx.params.id);
     const recipe = await getRecipeById(Http.client, recipeId);
 
     const data = { isAdmin, isLoggedIn, recipe };
@@ -72,23 +62,19 @@ export async function getRecipePage(
 
 const RECIPES_PER_PAGE = 12;
 
-export async function getRecipesPage(
-    _req: Request,
-    user: SafeUser,
-    params: QueryParams,
-): Promise<Response> {
+export async function getRecipesPage(ctx: HttpRequest): Promise<Response> {
     const client = Http.client;
 
-    const isAdmin = user
-        ? hasRessourcePermission(user.role, "recipe", "read")
+    const isAdmin = ctx.user
+        ? hasRessourcePermission(ctx.user.role, "recipe", "read")
         : false;
 
-    let page = Number(params.page);
+    let page = Number(ctx.params.page);
     if (Number.isNaN(page) || page < 1) page = 1;
 
     const [recipes, total] = await Promise.all([
         await GetPaginatedRecipes(client, page),
-        await TotalRecipesCount(client)
+        await TotalRecipesCount(client),
     ]);
 
     const totalPages = Math.ceil(total / RECIPES_PER_PAGE);
@@ -99,32 +85,28 @@ export async function getRecipesPage(
         pagination: {
             currentPage: page,
             totalPages,
-        }
+        },
     };
 
     return Http.renderTemplate("partials/view_recipe", data);
 }
 
-export async function searchRecipes(
-    _req: Request,
-    user: SafeUser,
-    params: QueryParams,
-): Promise<Response> {
+export async function searchRecipes(ctx: HttpRequest): Promise<Response> {
     const client = Http.client;
 
-    const isAdmin = user
-        ? hasRessourcePermission(user.role, "recipe", "read")
+    const isAdmin = ctx.user
+        ? hasRessourcePermission(ctx.user.role, "recipe", "read")
         : false;
 
-    const search = params.query as string;
-    console.log("Search: " + search)
+    const search = ctx.params.query as string;
+    console.log("Search: " + search);
 
-    let page = Number(params.page);
+    let page = Number(ctx.params.page);
     if (Number.isNaN(page) || page < 1) page = 1;
 
     const [recipes, total] = await Promise.all([
         SearchRecipes(client, search, page),
-        TotalSearchCount(client, search)
+        TotalSearchCount(client, search),
     ]);
 
     const totalPages = Math.ceil(total / RECIPES_PER_PAGE);
@@ -135,31 +117,27 @@ export async function searchRecipes(
         pagination: {
             currentPage: page,
             totalPages,
-        }
-    }
+        },
+    };
 
     return Http.renderTemplate("partials/recipe_list", data);
 }
 
-export async function getAllRecipesPage(
-    _req: Request,
-    user: SafeUser,
-    params: QueryParams,
-): Promise<Response> {
+export async function getAllRecipesPage(ctx: HttpRequest): Promise<Response> {
     const client = Http.client;
 
-    const isAdmin = user
-        ? hasRessourcePermission(user.role, "recipe", "read")
+    const isAdmin = ctx.user
+        ? hasRessourcePermission(ctx.user.role, "recipe", "read")
         : false;
 
-    const isLoggedIn = user ? true : false;
+    const isLoggedIn = ctx.user ? true : false;
 
-    let page = Number(params.page);
+    let page = Number(ctx.params.page);
     if (Number.isNaN(page) || page < 1) page = 1;
 
     const [recipes, total] = await Promise.all([
         await GetPaginatedRecipes(client, page),
-        await TotalRecipesCount(client)
+        await TotalRecipesCount(client),
     ]);
 
     const totalPages = Math.ceil(total / RECIPES_PER_PAGE);
@@ -171,7 +149,7 @@ export async function getAllRecipesPage(
         pagination: {
             currentPage: page,
             totalPages,
-        }
+        },
     };
 
     return Http.renderTemplate("allRecipes", data);
