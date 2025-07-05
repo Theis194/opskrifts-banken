@@ -2,7 +2,7 @@ import { SafeUser } from "../db/user-db.ts";
 
 export type Role = 'admin' | 'editor' | 'user' | 'guest';
 export type Permission = 'read' | 'write' | 'delete';
-export type Ressource = 'recipe' | 'comment' | 'admin';
+export type Ressource = 'recipe' | 'comment' | 'admin' | 'lists';
 
 const ressourcePermissions: Record<Ressource, Record<Role, Permission[]>> = {
     recipe: {
@@ -23,6 +23,12 @@ const ressourcePermissions: Record<Ressource, Record<Role, Permission[]>> = {
         editor: [],
         user: [],
         guest: [],
+    },
+    lists: {
+        admin: ['read', 'write', 'delete'],
+        editor: ['read', 'write'],
+        user: ['read', 'write'],
+        guest: ['read'],
     }
 };
 

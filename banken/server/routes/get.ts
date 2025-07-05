@@ -154,3 +154,8 @@ export async function getAllRecipesPage(ctx: HttpRequest): Promise<Response> {
 
     return Http.renderTemplate("allRecipes", data);
 }
+
+export async function getMyLists(_ctx: HttpRequest): Promise<Response> {
+    let data = {};
+    return Http.renderTemplate("shopping.eta", data);
+}

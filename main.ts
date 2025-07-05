@@ -1,5 +1,5 @@
 import { Http } from "./banken/server/wrapper.ts";
-import { getAddRecipe, getIndex, getRecipePage, getRecipesPage, searchRecipes, getAllRecipesPage } from "./banken/server/routes/get.ts";
+import { getAddRecipe, getIndex, getRecipePage, getRecipesPage, searchRecipes, getAllRecipesPage, getMyLists } from "./banken/server/routes/get.ts";
 import { postCreateUser, postLogin, postLogout, postNewRecipe } from "./banken/server/api/post.ts";
 import { getAdmin, getAdminAddRecipe, getCreateUser } from "./banken/server/routes/admingGets.ts";
 
@@ -10,6 +10,13 @@ server
     .addRoute("GET", "/recipe", getRecipePage, { requireAuth: false })
     .addRoute("GET", "/all-recipes", getAllRecipesPage, { requireAuth: false })
     .addRoute("GET", "/tilfoj-opskrift", getAddRecipe, {
+        requireAuth: true,
+        acm: {
+            resource: "recipe",
+            permission: "read",
+        },
+    })
+    .addRoute("GET", "/my-lists", getMyLists, {
         requireAuth: true,
         acm: {
             resource: "recipe",
