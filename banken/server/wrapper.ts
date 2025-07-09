@@ -201,7 +201,7 @@ export class Http {
     }
 
     static redirect(url: URL, headers?: HeadersInit): Response {
-        const redirectUrl = `${url.origin}/login?redirect=${encodeURIComponent(
+        const redirectUrl = `${url.origin}/?redirect=${encodeURIComponent(
             url.pathname
         )}`;
         return new Response(null, {

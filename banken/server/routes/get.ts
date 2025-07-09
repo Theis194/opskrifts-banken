@@ -16,6 +16,7 @@ import {
 import { hasRessourcePermission } from "../../acm/permission.ts";
 import { getShoppingListById, getShoppingLists } from "../../db/shopping.ts";
 import { url } from "node:inspector";
+import { ShoppingListDetail } from "../../db/shopping-db.ts";
 
 /*
 export async function exampleRouteFunction(ctx: HttpRequest): Promise<Response> {
@@ -158,19 +159,14 @@ export async function getAllRecipesPage(ctx: HttpRequest): Promise<Response> {
 }
 
 export async function getMyLists(ctx: HttpRequest): Promise<Response> {
-  const isAdmin = ctx.user
+  const isAdmin = ctx.user != undefined
     ? hasRessourcePermission(ctx.user.role, "recipe", "read")
     : false;
 
   const isLoggedIn = ctx.user ? true : false;
   const userId = ctx.user?.id ? ctx.user.id : NaN;
 
-  if (ctx.user == undefined) {
-    return Http.redirect(new URL("/"));
-  }
-
-  const shoppingLists = await getShoppingLists(Http.client, ctx.user.id);
-  console.log(shoppingLists)
+  const shoppingLists = await getShoppingLists(Http.client, userId);
   const data = { shoppingLists, isLoggedIn, isAdmin, userId };
   return Http.renderTemplate("shopping.eta", data);
 }
@@ -189,7 +185,26 @@ export async function getListById(ctx: HttpRequest): Promise<Response> {
 
   const listId = Number(ctx.params.id);
   const list = await getShoppingListById(Http.client, listId);
+
+  if (!canViewList(userId, list)) {
+    return Http.redirect(new URL("/"))
+  }
+
   const data = { list, isLoggedIn, isAdmin, userId };
 
   return Http.renderTemplate("shopping_list.eta", data);
+}
+
+function canViewList(userId: Number, list: ShoppingListDetail): boolean {
+  if (userId === list.author.user_id) {
+    return true
+  }
+
+  list.contributors.forEach((contributor) => {
+    if (userId === contributor.user_id) {
+      return true;
+    }
+  });
+
+  return false
 }

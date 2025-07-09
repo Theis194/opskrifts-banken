@@ -1,6 +1,6 @@
 import { Client } from "jsr:@db/postgres";
 import { z } from "zod";
-import { ShoppingListSchema, ShoppingListItemSchema } from "./shopping-db.ts";
+import { ShoppingListSchema, ShoppingListItemSchema, ShoppingListDetailSchema } from "./shopping-db.ts";
 
 interface RawShoppingListRow {
     list_id: number;
@@ -307,33 +307,6 @@ CROSS JOIN list_counts lc;
                 source_recipe_id: item.source_recipe_id,
             })),
         };
-
-        // Create schema for validation
-        const ContributorSchema = z.object({
-            user_id: z.number(),
-            username: z.string(),
-            email: z.string(),
-            can_edit: z.boolean(),
-            added_at: z.string(),
-            added_by: z.number(),
-        });
-
-        const ShoppingListDetailSchema = z.object({
-            list_id: z.number(),
-            list_name: z.string(),
-            author: z.object({
-                user_id: z.number(),
-                username: z.string(),
-                email: z.string(),
-            }),
-            created_at: z.string(),
-            updated_at: z.string(),
-            is_active: z.boolean(),
-            total_items: z.number(),
-            checked_items: z.number(),
-            contributors: z.array(ContributorSchema),
-            items: z.array(ShoppingListItemSchema),
-        });
 
         const parsed = ShoppingListDetailSchema.safeParse(transformedData);
 

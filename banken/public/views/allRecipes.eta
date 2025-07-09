@@ -20,7 +20,6 @@
 
 <body class="min-h-screen bg-base-100">
     <%~ include("./partials/nav", it) %>
-    <% console.log(it) %>
     <div class="mx-16 mt-4">
         <%~ include("./partials/view_recipe", {recipes: it.recipes, pagination: it.pagination, isAdmin: it.isAdmin}) %>
     </div>
