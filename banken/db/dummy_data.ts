@@ -1509,80 +1509,169 @@ async function insertShoppingListItems(
   userIds: number[],
   recipeIds: number[]
 ): Promise<void> {
-  // First, get all shopping items from the database to build a complete mapping
-  const itemsResult = await client.queryArray<[number, string, number | null]>(
-    "SELECT item_id, item_name, ingredient_id FROM shopping_items"
-  );
-  
-  // Create comprehensive mappings
-  const itemNameToId: Record<string, number> = {};
-  const ingredientIdToItemId: Record<number, number> = {};
-  
-  for (const row of itemsResult.rows) {
-    const [id, name, ingredientId] = row;
-    itemNameToId[name] = id;
-    if (ingredientId) {
-      ingredientIdToItemId[ingredientId] = id;
-    }
-  }
-
-  // Get all ingredients for fallback lookup
-  const ingredientsResult = await client.queryArray<[number, string]>(
-    "SELECT ingredient_id, name FROM ingredients"
-  );
-  const ingredientNameToId: Record<string, number> = {};
-  for (const row of ingredientsResult.rows) {
-    ingredientNameToId[row[1]] = row[0];
-  }
-
-  // Define shopping list items data
-  type ShoppingListItem = [
-    listIndex: number,
-    itemName: string,
-    quantity: number,
-    unit: string | null,
-    isChecked: boolean,
-    addedByIndex: number,
-    addedAt: string,
-    checkedByIndex: number | null,
-    checkedAt: string | null,
-    sortOrder: number,
-    notes: string | null,
-    recipeIndex: number | null
-  ];
-
-  const shoppingListItems: ShoppingListItem[] = [
-    // Your existing items data...
-  ];
-
-  // Process and insert items
-  for (const item of shoppingListItems) {
-    const [
-      listIndex, itemName, quantity, unit, isChecked, 
-      addedByIndex, addedAt, checkedByIndex, checkedAt, 
-      sortOrder, notes, recipeIndex
-    ] = item;
-
-    // Validate indices (same as before)
-    // ...
-
-    // Find item ID - try direct name match first
-    let itemId = itemNameToId[itemName];
+  try {
+    // 1. First get all existing shopping items from the database
+    const itemsResult = await client.queryArray<[number, string, number | null]>(
+      "SELECT item_id, item_name, ingredient_id FROM shopping_items"
+    );
     
-    // If not found by name, try to find by ingredient name
-    if (itemId === undefined) {
-      const ingredientId = ingredientNameToId[itemName];
-      if (ingredientId) {
-        itemId = ingredientIdToItemId[ingredientId];
+    // 2. Create comprehensive mappings for item lookup
+    const itemNameToId: Record<string, number> = {};
+    const ingredientIdToItemId: Record<number, number> = {};
+    
+    for (const row of itemsResult.rows) {
+      const [id, name, ingredientId] = row;
+      itemNameToId[name] = id;
+      if (ingredientId !== null) {
+        ingredientIdToItemId[ingredientId] = id;
       }
     }
 
-    if (itemId === undefined) {
-      console.warn(`Skipping unknown shopping item: ${itemName}`);
-      continue;
+    // 3. Get all ingredients for fallback lookup
+    const ingredientsResult = await client.queryArray<[number, string]>(
+      "SELECT ingredient_id, name FROM ingredients ORDER BY ingredient_id"
+    );
+    const ingredientNameToId: Record<string, number> = {};
+    for (const row of ingredientsResult.rows) {
+      ingredientNameToId[row[1]] = row[0];
     }
 
-    // Rest of your insertion logic...
+    // 4. Define shopping list items data
+    type ShoppingListItem = [
+      listIndex: number,     // Index in shoppingListIds array
+      itemName: string,
+      quantity: number,
+      unit: string | null,
+      isChecked: boolean,
+      addedByIndex: number,  // Index in userIds array
+      addedAt: string,
+      checkedByIndex: number | null,
+      checkedAt: string | null,
+      sortOrder: number,
+      notes: string | null,
+      recipeIndex: number | null  // Index in recipeIds array
+    ];
+
+    const shoppingListItems: ShoppingListItem[] = [
+      // Weekly Groceries (list 0)
+      [0, "Eggs", 12, null, false, 0, "2023-06-10 09:05:00", null, null, 1, "Large brown eggs", null],
+      [0, "Milk", 1, "gallon", false, 0, "2023-06-10 09:05:00", null, null, 2, "Whole milk", null],
+      [0, "Paper towels", 1, null, true, 0, "2023-06-10 09:06:00", 0, "2023-06-12 16:30:00", 3, "Bulk pack", null],
+      [0, "Chicken breast", 4, null, false, 0, "2023-06-11 18:30:00", null, null, 4, "For stir fry", 3],
+      [0, "Olive oil", 1, "bottle", false, 0, "2023-06-11 18:31:00", null, null, 5, "Extra virgin", null],
+      
+      // BBQ Party Supplies (list 1)
+      [1, "BBQ charcoal", 1, "bag", false, 1, "2023-06-12 14:05:00", null, null, 1, null, null],
+      [1, "Chicken breast", 6, null, false, 1, "2023-06-12 14:06:00", null, null, 2, "For skewers", null],
+      [1, "Aluminum foil", 1, "roll", true, 1, "2023-06-12 14:07:00", 1, "2023-06-16 12:00:00", 3, "Heavy duty", null],
+      [1, "Banana", 6, null, false, 1, "2023-06-13 10:00:00", null, null, 4, "For banana pudding", 1],
+      [1, "Chocolate chips", 1, "bag", false, 1, "2023-06-13 10:01:00", null, null, 5, null, 1],
+      
+      // Vegan Meal Prep (list 2)
+      [2, "Avocado", 4, null, false, 2, "2023-06-15 11:35:00", null, null, 1, "For toast and salad", 2],
+      [2, "Quinoa", 1, "bag", false, 2, "2023-06-15 11:36:00", null, null, 2, "Organic if possible", 5],
+      [2, "Dish soap", 1, null, false, 2, "2023-06-15 11:37:00", null, null, 3, null, null],
+      
+      // Baking Essentials (list 3)
+      [3, "Eggs", 6, null, false, 3, "2023-06-18 18:05:00", null, null, 1, null, null],
+      [3, "Milk", 0.5, "gallon", false, 3, "2023-06-18 18:06:00", null, null, 2, null, null],
+      [3, "Chocolate chips", 2, "bags", true, 3, "2023-06-18 18:07:00", 3, "2023-06-19 14:00:00", 3, "Dark and milk", 1],
+      [3, "Garbage bags", 1, null, false, 3, "2023-06-19 09:00:00", null, null, 4, "For cleanup", null]
+    ];
+
+    // 5. Prepare the query with parameterized values
+    const values: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+    let skippedItems = 0;
+
+    for (const item of shoppingListItems) {
+      const [
+        listIndex, 
+        itemName, 
+        quantity, 
+        unit, 
+        isChecked, 
+        addedByIndex, 
+        addedAt, 
+        checkedByIndex, 
+        checkedAt, 
+        sortOrder, 
+        notes, 
+        recipeIndex
+      ] = item;
+
+      // Validate indices
+      if (listIndex < 0 || listIndex >= shoppingListIds.length) {
+        throw new Error(`Invalid shopping list index: ${listIndex} (max ${shoppingListIds.length-1})`);
+      }
+      if (addedByIndex < 0 || addedByIndex >= userIds.length) {
+        throw new Error(`Invalid added_by user index: ${addedByIndex} (max ${userIds.length-1})`);
+      }
+      if (checkedByIndex !== null && (checkedByIndex < 0 || checkedByIndex >= userIds.length)) {
+        throw new Error(`Invalid checked_by user index: ${checkedByIndex} (max ${userIds.length-1})`);
+      }
+      if (recipeIndex !== null && (recipeIndex < 0 || recipeIndex >= recipeIds.length)) {
+        throw new Error(`Invalid recipe index: ${recipeIndex} (max ${recipeIds.length-1})`);
+      }
+
+      // Find item ID - try direct name match first
+      let itemId = itemNameToId[itemName];
+      
+      // If not found by name, try to find by ingredient name
+      if (itemId === undefined) {
+        const ingredientId = ingredientNameToId[itemName];
+        if (ingredientId !== undefined) {
+          itemId = ingredientIdToItemId[ingredientId];
+        }
+      }
+
+      if (itemId === undefined) {
+        console.warn(`Skipping unknown shopping item: ${itemName}`);
+        skippedItems++;
+        continue;
+      }
+
+      values.push(`(
+        $${paramIndex}, $${paramIndex+1}, $${paramIndex+2}, $${paramIndex+3}, 
+        $${paramIndex+4}, $${paramIndex+5}, $${paramIndex+6}, $${paramIndex+7}, 
+        $${paramIndex+8}, $${paramIndex+9}, $${paramIndex+10}, $${paramIndex+11}
+      )`);
+      
+      params.push(
+        shoppingListIds[listIndex],
+        itemId,
+        quantity,
+        unit,
+        isChecked,
+        userIds[addedByIndex],
+        addedAt,
+        checkedByIndex !== null ? userIds[checkedByIndex] : null,
+        checkedAt,
+        sortOrder,
+        notes,
+        recipeIndex !== null ? recipeIds[recipeIndex] : null
+      );
+      
+      paramIndex += 12;
+    }
+
+    // 6. Only execute if we have items to insert
+    if (values.length > 0) {
+      await client.queryArray(
+        `INSERT INTO shopping_list_items (
+          list_id, item_id, quantity, unit, is_checked, added_by, 
+          added_at, checked_by, checked_at, sort_order, notes, source_recipe_id
+        ) VALUES ${values.join(",")}`,
+        params
+      );
+      console.log(`Inserted ${values.length} shopping list items (skipped ${skippedItems})`);
+    } else if (skippedItems > 0) {
+      throw new Error("All shopping list items were skipped due to missing references");
+    }
+  } catch (error) {
+    console.error("Failed to insert shopping list items:", error);
+    throw error;
   }
 }
 

@@ -5,14 +5,14 @@ const SECRET_KEY = "your-secret-key";
 const REFRESH_SECRET_KEY = "your-refresh-secret-key";
 
 export function generateToken(user: SafeUser): string {
-  return jwt.sign({ email: user.email, username: user.username, role: user.role }, SECRET_KEY, {
+  return jwt.sign({ email: user.email, username: user.username, role: user.role, id: user.id }, SECRET_KEY, {
     expiresIn: "1h",
   });
 }
 
 export function generateRefreshToken(user: SafeUser): string {
   return jwt.sign(
-    { email: user.email, username: user.username, role: user.role },
+    { email: user.email, username: user.username, role: user.role, id: user.id },
     REFRESH_SECRET_KEY,
     { expiresIn: "7d" } // Refresh token expires in 7 days
   );

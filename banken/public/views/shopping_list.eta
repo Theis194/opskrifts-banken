@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cupcake">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    Shopping List | My Recipe Collection
+  </title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- DaisyUI -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="../js/redirect.js"></script>
+</head>
+
+<% function formatDate(dateStr) {
+    const dateOnly = dateStr.split("T")[0];
+    const date = new Date(dateOnly);
+    return date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    });
+  }
+%>
+
+<body class="min-h-screen flex flex-col">
+  <%~ include("./partials/nav", it) %>
+
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- Header with list info -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800" id="list-title"><%= it.list.list_name %></h1>
+          <p class="text-gray-600">
+            Created by <span class="font-semibold" id="author-name"><%= it.list.author.username %></span>
+            on <span id="created-date"><%= formatDate(it.list.created_at)%></span>
+          </p>
+        </div>
+        <div class="badge badge-lg badge-primary" id="item-count">
+          <i class="fas fa-shopping-basket mr-1"></i>
+          <span><%= it.list.total_items %> items</span>
+        </div>
+      </div>
+
+      <!-- Contributors section -->
+      <div class="mt-4">
+        <h3 class="text-sm font-semibold text-gray-500 mb-2">Shared With</h3>
+        <div class="flex flex-wrap gap-2" id="contributors-list">
+          <% it.list.contributors.forEach(function(contributor) { %>
+          <div class="badge badge-outline">
+            <i class="fas fa-user mr-1"></i> <%= contributor.username %>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shopping list items -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="divide-y divide-gray-200">
+        <!-- Category header (optional) -->
+        <div class="px-6 py-3 bg-gray-100">
+          <h3 class="font-medium text-gray-700">
+            <i class="fas fa-utensils mr-2"></i> Items
+          </h3>
+        </div>
+
+        <!-- List items -->
+        <div id="shopping-items">
+          <% it.list.items.forEach(function(item) { %>
+          <div class="shopping-item px-6 py-4 flex items-center hover:bg-gray-50">
+            <div class="flex items-center mr-4 ">
+              <input type="checkbox" class="checkbox checkbox-primary" <%= item.is_checked ? 'checked' : ''%> />
+            </div>
+            <div class="flex-grow">
+              <div class="item-name font-medium text-gray-800"><%= item.item_name%></div>
+              <% if (item.description != null) {%>
+              <div class="text-sm text-gray-500"><%= item.quantity%> <%= item.unit ? item.unit : ''%> • <%= item.description %></div>
+              <% } else { %>
+              <div class="text-sm text-gray-500"><%= item.quantity%> <%= item.unit ? item.unit : ''%></div>
+              <% } %>
+            </div>
+            <div class="text-sm text-gray-500 ml-4">
+              Added by <span class="font-medium">Jane</span>
+            </div>
+            <button class="ml-4 text-gray-400 hover:text-gray-600">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+          <% }) %>
+
+        </div>
+
+        <!-- Add new item -->
+        <div class="px-6 py-4 bg-gray-50">
+          <div class="flex items-center">
+            <button class="btn btn-sm btn-ghost mr-2">
+              <i class="fas fa-plus"></i>
+            </button>
+            <input type="text" placeholder="Add new item..." class="input input-bordered input-sm w-full max-w-xs" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- List actions -->
+    <div class="mt-6 flex justify-end space-x-3">
+      <button class="btn btn-outline btn-sm">
+        <i class="fas fa-share-alt mr-2"></i> Share
+      </button>
+      <button class="btn btn-outline btn-sm">
+        <i class="fas fa-print mr-2"></i> Print
+      </button>
+      <button class="btn btn-primary btn-sm">
+        <i class="fas fa-save mr-2"></i> Save Changes
+      </button>
+    </div>
+  </div>
+
+  <%~ include("./partials/footer") %>
+  <script src="../js/listItems.js"></script>
+</body>
+
+</html>

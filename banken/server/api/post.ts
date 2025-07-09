@@ -56,7 +56,6 @@ export async function postLogin(ctx: HttpRequest): Promise<Response> {
         };
 
         const login = LoginSchema.parse(parsedLogin);
-        console.log(login);
 
         const queryResult = await getUserByNameOrEmail(
             Http.client,
@@ -80,6 +79,7 @@ export async function postLogin(ctx: HttpRequest): Promise<Response> {
             username: queryResult.username,
             email: queryResult.email,
             role: queryResult.role as Role,
+            id: queryResult.user_id
         };
 
         const token = generateToken(user);

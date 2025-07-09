@@ -156,7 +156,7 @@ export class Http {
     }
 
     static async authMiddleware(req: Request): Promise<{
-        user: { email: string; username: string; role: Role } | null;
+        user: { email: string; username: string; role: Role, id: number } | null;
         response?: Response;
     }> {
         const cookies = this.parseCookie(req);

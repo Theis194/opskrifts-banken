@@ -1,4 +1,4 @@
-<tr>
+<tr onclick="redirect('/recipe?id=<%= it.recipe.id%>')">
   <td>
     <div class="flex items-center space-x-3">
       <div class="avatar">
@@ -28,6 +28,6 @@
   <td><%= it.recipe.prepTime %>m</td>
   <td><%= it.recipe.addedAgo.replace('.0', '') %></td>
   <th>
-    <a href="/recipe?id=<%= it.recipe.id %>" class="btn btn-ghost btn-xs">details</a>
+    <button class="btn btn-ghost btn-xs">details</button>
   </th>
 </tr>
