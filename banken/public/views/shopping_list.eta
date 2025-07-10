@@ -13,6 +13,8 @@
   <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Alpine.js for reactivity -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <script src="../js/redirect.js"></script>
 </head>
 
@@ -24,6 +26,17 @@
         day: 'numeric',
         year: 'numeric'
     });
+  }
+%>
+
+<% function idToName(id) {
+    const author = it.list.author
+    const contributorList = it.list.contributors
+    if (id === author.user_id) return author.username
+
+    contributorList.forEach((contributor) => {
+      if (id === contributor.user_id) return contributor.username
+    }); 
   }
 %>
 
@@ -61,7 +74,7 @@
     </div>
 
     <!-- Shopping list items -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="bg-white rounded-lg shadow-md overflow-visible">
       <div class="divide-y divide-gray-200">
         <!-- Category header (optional) -->
         <div class="px-6 py-3 bg-gray-100">
@@ -79,17 +92,13 @@
             </div>
             <div class="flex-grow">
               <div class="item-name font-medium text-gray-800"><%= item.item_name%></div>
-              <% if (item.description != null) {%>
-              <div class="text-sm text-gray-500"><%= item.quantity%> <%= item.unit ? item.unit : ''%> • <%= item.description %></div>
-              <% } else { %>
               <div class="text-sm text-gray-500"><%= item.quantity%> <%= item.unit ? item.unit : ''%></div>
-              <% } %>
             </div>
             <div class="text-sm text-gray-500 ml-4">
-              Added by <span class="font-medium">Jane</span>
+              Added by <span class="font-medium added-by"><%= idToName(item.added_by, it.list.author, it.list.contributors) %></span>
             </div>
-            <button class="ml-4 text-gray-400 hover:text-gray-600">
-              <i class="fas fa-ellipsis-v"></i>
+            <button class="ml-4 text-gray-400 hover:text-gray-600 remove-item">
+              <i class="fas fa-trash"></i>
             </button>
           </div>
           <% }) %>
@@ -98,11 +107,35 @@
 
         <!-- Add new item -->
         <div class="px-6 py-4 bg-gray-50">
-          <div class="flex items-center">
-            <button class="btn btn-sm btn-ghost mr-2">
+          <div class="flex items-center relative" x-data="shoppingListAutocomplete()">
+            <button class="btn btn-sm btn-ghost mr-2" @click="addItemToList()">
               <i class="fas fa-plus"></i>
             </button>
-            <input type="text" placeholder="Add new item..." class="input input-bordered input-sm w-full max-w-xs" />
+
+            <!-- Input with autocomplete -->
+            <div class="relative w-full max-w-xs">
+              <input type="text" placeholder="Add new item..." class="input input-bordered input-sm w-full" x-model="query" @input.debounce.300ms="filterItems" @focus="open = true" @keydown.escape="open = false" @keydown.arrow-down.prevent="moveDown" @keydown.arrow-up.prevent="moveUp" @keydown.enter.prevent="selectItem" />
+
+              <!-- Dropdown menu -->
+              <ul x-show="open && matches.length" x-cloak @click.outside="open = false" class="absolute left-0 right-0 mt-1 w-full bg-white shadow-lg rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto max-h-60 focus:outline-none sm:text-sm z-50" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95">
+                <template x-for="(item, index) in matches" :key="index">
+                  <li>
+                    <a @click="selectItemWithClick(index)" :class="{ 'bg-primary text-white': index === activeIndex }" class="cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-primary hover:text-white block truncate" x-text="item"></a>
+                  </li>
+                </template>
+              </ul>
+            </div>
+
+            <!-- Quantity Input -->
+            <div class="form-control w-20">
+              <input type="number" min="1" value="1" class="input input-bordered input-sm" x-model="quantity" placeholder="Qty">
+            </div>
+
+            <!-- Unit Input -->
+            <div class="form-control w-24">
+              <input type="text" class="input input-bordered input-sm" x-model="unit" placeholder="Unit">
+            </div>
+
           </div>
         </div>
       </div>
@@ -113,8 +146,8 @@
       <button class="btn btn-outline btn-sm">
         <i class="fas fa-share-alt mr-2"></i> Share
       </button>
-      <button class="btn btn-outline btn-sm">
-        <i class="fas fa-print mr-2"></i> Print
+      <button class="btn btn-error btn-sm">
+        <i class="fas fa-trash mr-2"></i> Delete
       </button>
       <button class="btn btn-primary btn-sm">
         <i class="fas fa-save mr-2"></i> Save Changes
@@ -124,6 +157,10 @@
 
   <%~ include("./partials/footer") %>
   <script src="../js/listItems.js"></script>
+  <script>
+    window.itemNames = <%~ JSON.stringify(it.itemNames)%>;
+    window.currentUsername = <%~JSON.stringify(it.currentUsername)%>;
+  </script>
 </body>
 
 </html>

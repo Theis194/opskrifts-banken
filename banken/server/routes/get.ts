@@ -14,7 +14,7 @@ import {
   getRecipeById,
 } from "../../db/recipes.ts";
 import { hasRessourcePermission } from "../../acm/permission.ts";
-import { getShoppingListById, getShoppingLists } from "../../db/shopping.ts";
+import { getItemNames, getShoppingListById, getShoppingLists } from "../../db/shopping.ts";
 import { url } from "node:inspector";
 import { ShoppingListDetail } from "../../db/shopping-db.ts";
 
@@ -177,7 +177,8 @@ export async function getListById(ctx: HttpRequest): Promise<Response> {
     : false;
 
   const isLoggedIn = ctx.user ? true : false;
-  const userId = ctx.user?.id ? ctx.user.id : NaN;
+  const userId = ctx.user ? ctx.user.id : NaN;
+  const currentUsername = ctx.user ? ctx.user.username : "";
 
   if (!isLoggedIn) {
     return Http.redirect(new URL("/"))
@@ -185,26 +186,21 @@ export async function getListById(ctx: HttpRequest): Promise<Response> {
 
   const listId = Number(ctx.params.id);
   const list = await getShoppingListById(Http.client, listId);
+  const itemNames = await getItemNames(Http.client);
 
   if (!canViewList(userId, list)) {
     return Http.redirect(new URL("/"))
   }
 
-  const data = { list, isLoggedIn, isAdmin, userId };
+  const data = { list, isLoggedIn, isAdmin, userId, currentUsername, itemNames };
 
   return Http.renderTemplate("shopping_list.eta", data);
 }
 
-function canViewList(userId: Number, list: ShoppingListDetail): boolean {
+function canViewList(userId: number, list: ShoppingListDetail): boolean {
   if (userId === list.author.user_id) {
     return true
   }
 
-  list.contributors.forEach((contributor) => {
-    if (userId === contributor.user_id) {
-      return true;
-    }
-  });
-
-  return false
+  return list.contributors.some(contributor => userId === contributor.user_id);
 }

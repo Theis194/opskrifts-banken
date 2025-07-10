@@ -1,6 +1,7 @@
 import { Client } from "jsr:@db/postgres";
 import { z } from "zod";
 import { ShoppingListSchema, ShoppingListItemSchema, ShoppingListDetailSchema } from "./shopping-db.ts";
+import { Interface } from "node:readline";
 
 interface RawShoppingListRow {
     list_id: number;
@@ -320,4 +321,39 @@ CROSS JOIN list_counts lc;
         console.error("Database error:", error);
         throw error;
     }
+}
+
+interface ItemName {
+  name: string,
+}
+
+export async function getItemNames(client: Client): Promise<string[]> {
+  const query = `SELECT DISTINCT ON (lower(name)) name
+    FROM (
+        -- Shopping item names (using ingredient name if referenced)
+        SELECT coalesce(i.name, si.item_name) AS name
+        FROM shopping_items si
+        LEFT JOIN ingredients i ON si.ingredient_id = i.ingredient_id
+        
+        UNION
+        
+        -- Ingredients not referenced by shopping items
+        SELECT name
+        FROM ingredients
+        WHERE ingredient_id NOT IN (
+            SELECT ingredient_id 
+            FROM shopping_items 
+            WHERE ingredient_id IS NOT NULL
+        )
+    ) combined_names
+    ORDER BY lower(name);
+    `
+  
+  const result = await client.queryObject<ItemName>(query);
+  const items: string[] = [];
+  result.rows.forEach(row => {
+    items.push(row.name);
+  });
+
+  return items
 }
