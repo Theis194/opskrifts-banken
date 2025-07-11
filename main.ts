@@ -1,6 +1,6 @@
 import { Http } from "./banken/server/wrapper.ts";
 import { getAddRecipe, getIndex, getRecipePage, getRecipesPage, searchRecipes, getAllRecipesPage, getMyLists, getListById } from "./banken/server/routes/get.ts";
-import { postCreateUser, postLogin, postLogout, postNewRecipe } from "./banken/server/api/post.ts";
+import { addShoppingItem, postCreateUser, postLogin, postLogout, postNewRecipe, removeShoppingItem } from "./banken/server/api/post.ts";
 import { getAdmin, getAdminAddRecipe, getCreateUser } from "./banken/server/routes/admingGets.ts";
 
 const server = await Http.create("./banken/public");
@@ -68,5 +68,19 @@ server
             resource: "admin",
             permission: "write",
         }
+    })
+    .addRoute("POST", "/api/list/addItem", addShoppingItem, {
+        requireAuth: true,
+        acm: {
+            resource: "lists",
+            permission: "write",
+        },
+    })
+    .addRoute("POST", "/api/list/removeItem", removeShoppingItem, {
+        requireAuth: true,
+        acm: {
+            resource: "lists",
+            permission: "delete",
+        },
     })
     .serve();

@@ -173,3 +173,29 @@ export async function postCreateUser(ctx: HttpRequest): Promise<Response> {
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
 }
+
+export async function addShoppingItem(ctx: HttpRequest): Promise<Response> {
+    let formData;
+    if (ctx.formData != undefined) {
+        formData = ctx.formData;
+    } else {
+        ctx.res.json({message: "Failed to get formdata"}, 400);
+    }
+    
+    console.log(formData)
+
+    return ctx.res.json({ success: true })
+}
+
+export async function removeShoppingItem(ctx: HttpRequest): Promise<Response> {
+    let formData;
+    if (ctx.formData != undefined) {
+        formData = ctx.formData;
+    } else {
+        ctx.res.json({message: "Failed to get formdata"}, 400);
+    }
+    
+    console.log(formData)
+
+    return ctx.res.json({ success: true })
+}

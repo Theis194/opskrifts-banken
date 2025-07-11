@@ -181,7 +181,7 @@ export async function getListById(ctx: HttpRequest): Promise<Response> {
   const currentUsername = ctx.user ? ctx.user.username : "";
 
   if (!isLoggedIn) {
-    return Http.redirect(new URL("/"))
+    return ctx.res.redirect("/");
   }
 
   const listId = Number(ctx.params.id);
@@ -189,7 +189,7 @@ export async function getListById(ctx: HttpRequest): Promise<Response> {
   const itemNames = await getItemNames(Http.client);
 
   if (!canViewList(userId, list)) {
-    return Http.redirect(new URL("/"))
+    return ctx.res.redirect("/");
   }
 
   const data = { list, isLoggedIn, isAdmin, userId, currentUsername, itemNames };

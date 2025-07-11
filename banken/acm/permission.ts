@@ -26,8 +26,8 @@ const ressourcePermissions: Record<Ressource, Record<Role, Permission[]>> = {
     },
     lists: {
         admin: ['read', 'write', 'delete'],
-        editor: ['read', 'write'],
-        user: ['read', 'write'],
+        editor: ['read', 'write', 'delete'],
+        user: ['read', 'write', 'delete'],
         guest: ['read'],
     }
 };

@@ -39,7 +39,7 @@ document.addEventListener("alpine:init", () => {
         activeIndex: -1,
         currentUsername: window.currentUsername,
         listId: new URLSearchParams(window.location.search).get("id"),
-        removedItems: [],
+        addItems: [],
 
         init() {
             // Initialize remove handlers for existing items
@@ -76,6 +76,7 @@ document.addEventListener("alpine:init", () => {
 
             this.removeItem(this.listId, itemName, quantity, unit, addedBy)
                 .then((response) => {
+                    console.log(response);
                     if (response.ok) {
                         item.remove();
                         this.updateItemCount();
@@ -141,6 +142,7 @@ document.addEventListener("alpine:init", () => {
                 this.currentUsername
             )
                 .then((response) => {
+                    console.log(response);
                     if (response.ok) {
                         // Create a new item element
                         const newItem = document.createElement("div");
@@ -197,24 +199,44 @@ document.addEventListener("alpine:init", () => {
                 });
         },
 
-        async removeItem(listId, itemName, quantity, unit, addedBy) {
-            this.removedItems.push({
-                listId,
-                itemName,
-                quantity,
-                unit,
-                addedBy,
-            });
+        removeItem(listId, itemName, quantity, unit, addedBy) {
+            const formData = new FormData();
+            formData.append("listId", listId);
+            formData.append("itemName", itemName);
+            formData.append("quantity", quantity);
+            formData.append("unit", unit);
+            formData.append("addedBy", addedBy);
+
             console.log(
                 `removing item from shopping list with id ${listId}: ${itemName} ${quantity} ${unit}, added by ${addedBy}`
             );
-            console.log(this.removedItems);
+            console.log(formData);
+
+            return fetch("/api/list/removeItem", {
+                // Replace with your actual endpoint
+                method: "POST",
+                body: formData,
+            });
         },
 
-        async addItem(listId, itemName, quantity, unit, addedBy) {
+        addItem(listId, itemName, quantity, unit, addedBy) {
+            const formData = new FormData();
+            formData.append("listId", listId);
+            formData.append("itemName", itemName);
+            formData.append("quantity", quantity);
+            formData.append("unit", unit);
+            formData.append("addedBy", addedBy);
+            this.addItems.push(formData);
+
             console.log(
                 `adding item from shopping list with id ${listId}: ${itemName} ${quantity} ${unit}, added by ${addedBy}`
             );
+            console.log(this.addItems);
+
+            return fetch("/api/list/addItem", {
+                method: "POST",
+                body: formData,
+            });
         },
 
         updateItemCount() {
