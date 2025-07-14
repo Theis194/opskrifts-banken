@@ -180,6 +180,9 @@ document.addEventListener("alpine:init", () => {
                             removeButton._removeHandler
                         );
 
+                        console.log("new item: " + this.query)
+                        window.itemNames.push(this.query);
+
                         // Update item count
                         this.updateItemCount();
                     } else {

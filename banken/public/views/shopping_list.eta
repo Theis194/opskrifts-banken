@@ -34,9 +34,9 @@
     const contributorList = it.list.contributors
     if (id === author.user_id) return author.username
 
-    contributorList.forEach((contributor) => {
+    for (const contributor of contributorList) {
       if (id === contributor.user_id) return contributor.username
-    }); 
+    }
   }
 %>
 
@@ -95,7 +95,7 @@
               <div class="text-sm text-gray-500"><%= item.quantity%> <%= item.unit ? item.unit : ''%></div>
             </div>
             <div class="text-sm text-gray-500 ml-4">
-              Added by <span class="font-medium added-by"><%= idToName(item.added_by, it.list.author, it.list.contributors) %></span>
+              Added by <span class="font-medium added-by"><%= idToName(item.added_by) %></span>
             </div>
             <button class="ml-4 text-gray-400 hover:text-gray-600 remove-item">
               <i class="fas fa-trash"></i>

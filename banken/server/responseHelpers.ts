@@ -18,7 +18,7 @@ export class ResponseHelpers {
         errorCode: string,
         additionalParams: Record<string, string> = {}
     ): Response {
-        const url = new URL("/login", this.req.url.origin);
+        const url = new URL("/", this.req.url.origin);
         url.searchParams.set("error", errorCode);
 
         // Preserve original redirect if present

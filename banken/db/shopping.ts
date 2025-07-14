@@ -1,7 +1,12 @@
 import { Client } from "jsr:@db/postgres";
 import { z } from "zod";
-import { ShoppingListSchema, ShoppingListItemSchema, ShoppingListDetailSchema } from "./shopping-db.ts";
-import { Interface } from "node:readline";
+import {
+    ShoppingListSchema,
+    ShoppingListDetailSchema,
+    ShoppingItemOutput,
+    ShoppingItemSchema,
+    ShoppingItemInput,
+} from "./shopping-db.ts";
 
 interface RawShoppingListRow {
     list_id: number;
@@ -225,7 +230,9 @@ FROM list_base lb
 CROSS JOIN list_counts lc;
 `;
 
-        const result = await client.queryObject<RawShoppingListDetail>(query, [listId]);
+        const result = await client.queryObject<RawShoppingListDetail>(query, [
+            listId,
+        ]);
 
         if (result.rows.length === 0) {
             throw new Error("Shopping list not found");
@@ -266,26 +273,29 @@ CROSS JOIN list_counts lc;
                 username: row.author_username,
                 email: row.author_email,
             },
-            created_at: row.created_at instanceof Date 
-                ? row.created_at.toISOString() 
-                : row.created_at,
-            updated_at: row.updated_at instanceof Date 
-                ? row.updated_at.toISOString() 
-                : row.updated_at,
+            created_at:
+                row.created_at instanceof Date
+                    ? row.created_at.toISOString()
+                    : row.created_at,
+            updated_at:
+                row.updated_at instanceof Date
+                    ? row.updated_at.toISOString()
+                    : row.updated_at,
             is_active: row.is_active,
             total_items: Number(row.total_items),
             checked_items: Number(row.checked_items),
-            contributors: contributors.map(c => ({
+            contributors: contributors.map((c) => ({
                 user_id: c.user_id,
                 username: c.username,
                 email: c.email,
                 can_edit: c.can_edit,
-                added_at: c.added_at instanceof Date 
-                    ? c.added_at.toISOString() 
-                    : c.added_at,
+                added_at:
+                    c.added_at instanceof Date
+                        ? c.added_at.toISOString()
+                        : c.added_at,
                 added_by: c.added_by,
             })),
-            items: items.map(item => ({
+            items: items.map((item) => ({
                 list_item_id: item.list_item_id,
                 item_id: item.item_id,
                 item_name: item.item_name,
@@ -296,13 +306,15 @@ CROSS JOIN list_counts lc;
                 unit: item.unit,
                 is_checked: item.is_checked,
                 added_by: item.added_by,
-                added_at: item.added_at instanceof Date 
-                    ? item.added_at.toISOString() 
-                    : item.added_at,
+                added_at:
+                    item.added_at instanceof Date
+                        ? item.added_at.toISOString()
+                        : item.added_at,
                 checked_by: item.checked_by,
-                checked_at: item.checked_at instanceof Date 
-                    ? item.checked_at.toISOString() 
-                    : item.checked_at,
+                checked_at:
+                    item.checked_at instanceof Date
+                        ? item.checked_at.toISOString()
+                        : item.checked_at,
                 sort_order: item.sort_order,
                 notes: item.notes,
                 source_recipe_id: item.source_recipe_id,
@@ -324,11 +336,11 @@ CROSS JOIN list_counts lc;
 }
 
 interface ItemName {
-  name: string,
+    name: string;
 }
 
 export async function getItemNames(client: Client): Promise<string[]> {
-  const query = `SELECT DISTINCT ON (lower(name)) name
+    const query = `SELECT DISTINCT ON (lower(name)) name
     FROM (
         -- Shopping item names (using ingredient name if referenced)
         SELECT coalesce(i.name, si.item_name) AS name
@@ -347,13 +359,268 @@ export async function getItemNames(client: Client): Promise<string[]> {
         )
     ) combined_names
     ORDER BY lower(name);
-    `
-  
-  const result = await client.queryObject<ItemName>(query);
-  const items: string[] = [];
-  result.rows.forEach(row => {
-    items.push(row.name);
-  });
+    `;
 
-  return items
+    const result = await client.queryObject<ItemName>(query);
+    const items: string[] = [];
+    result.rows.forEach((row) => {
+        items.push(row.name);
+    });
+
+    return items;
+}
+
+export async function addItemToList(client: Client, input: ShoppingItemInput) {
+    const validated = ShoppingItemSchema.parse(input);
+
+    const userResult = await client.queryObject<{ user_id: number }>(
+        `SELECT user_id FROM users WHERE username = $1`,
+        [validated.addedBy]
+    );
+
+    if (userResult.rows.length === 0) {
+        throw new Error("User not found");
+    }
+
+    const userId = userResult.rows[0].user_id;
+    try {
+        await client.queryObject(`BEGIN`);
+
+        const itemId = await findOrCreateShoppingItem(
+            client,
+            validated.itemName
+        );
+
+        const result = await client.queryObject<{ list_item_id: number }>(
+            `INSERT INTO shopping_list_items (
+        list_id, item_id, quantity, unit, added_by, added_at
+       ) VALUES ($1, $2, $3, $4, $5, NOW())
+       RETURNING list_item_id`,
+            [
+                validated.listId,
+                itemId,
+                validated.quantity,
+                validated.unit,
+                userId,
+            ]
+        );
+
+        // Update list updated_at
+        await client.queryObject(
+            `UPDATE shopping_lists 
+       SET updated_at = NOW() 
+       WHERE list_id = $1`,
+            [validated.listId]
+        );
+
+        await client.queryObject("COMMIT");
+
+        return {
+            success: true,
+            listItemId: result.rows[0].list_item_id,
+        };
+    } catch (error) {
+        await client.queryObject(`ROLLBACK`);
+        throw error;
+    }
+}
+
+export async function removeItemFromList(
+    client: Client,
+    input: ShoppingItemInput
+) {
+    const validated = ShoppingItemSchema.parse(input);
+
+    try {
+        await client.queryObject(`BEGIN`);
+
+        // Get user id
+        const userResult = await client.queryObject<{ user_id: number }>(
+            `SELECT user_id FROM users WHERE username = $1`,
+            [validated.addedBy]
+        );
+
+        if (userResult.rows.length === 0) {
+            throw new Error("User not found");
+        }
+        const userId = userResult.rows[0].user_id;
+
+        // Find the item
+        const itemResult = await client.queryObject<{ item_id: number }>(
+            `SELECT item_id FROM shopping_items 
+       WHERE item_name = $1`,
+            [validated.itemName]
+        );
+
+        if (itemResult.rows.length === 0) {
+            throw new Error("Item not found in catalog");
+        }
+        const itemId = itemResult.rows[0].item_id;
+
+        // Delete the specific item
+        const deleteResult = await client.queryObject<{ list_item_id: number }>(
+            `DELETE FROM shopping_list_items
+       WHERE list_id = $1
+       AND item_id = $2
+       AND quantity = $3
+       AND unit = $4
+       AND added_by = $5
+       RETURNING list_item_id`,
+            [
+                validated.listId,
+                itemId,
+                validated.quantity,
+                validated.unit,
+                userId,
+            ]
+        );
+
+        if (deleteResult.rows.length === 0) {
+            throw new Error("No matching item found in the shopping list");
+        }
+
+        await client.queryObject(
+            `UPDATE shopping_lists 
+       SET updated_at = NOW() 
+       WHERE list_id = $1`,
+            [validated.listId]
+        );
+
+        await client.queryObject("COMMIT");
+
+        return {
+            success: true,
+            removedItemId: deleteResult.rows[0].list_item_id,
+        };
+    } catch (error) {
+        await client.queryObject(`ROLLBACK`);
+        throw error;
+    }
+}
+
+async function findOrCreateShoppingItem(
+    client: Client,
+    itemName: string
+): Promise<number> {
+    const ingredientResult = await client.queryObject<{
+        ingredient_id: number;
+    }>(`SELECT ingredient_id FROM ingredients WHERE name = $1`, [itemName]);
+
+    // Check if itemName already exists in shopping items, if not create a new entry
+    if (ingredientResult.rows.length > 0) {
+        const existingItem = await client.queryObject<{ item_id: number }>(
+            `SELECT item_id FROM shopping_items WHERE ingredient_id = $1`,
+            [ingredientResult.rows[0].ingredient_id]
+        );
+
+        if (existingItem.rows.length > 0) {
+            return existingItem.rows[0].item_id;
+        }
+
+        const newItem = await client.queryObject<{ item_id: number }>(
+            `INSERT INTO shopping_items (item_name, item_type, ingredient_id)
+       VALUES ($1, 'ingredient', $2)
+       RETURNING item_id`,
+            [itemName, ingredientResult.rows[0].ingredient_id]
+        );
+        return newItem.rows[0].item_id;
+    }
+
+    // Not an ingredient - check if we have a generic shopping item
+    const genericItem = await client.queryObject<{ item_id: number }>(
+        `SELECT item_id FROM shopping_items 
+     WHERE item_name = $1 AND item_type = 'generic'`,
+        [itemName]
+    );
+
+    if (genericItem.rows.length > 0) {
+        return genericItem.rows[0].item_id;
+    }
+
+    // Create a new generic item
+    const newGenericItem = await client.queryObject<{ item_id: number }>(
+        `INSERT INTO shopping_items (item_name, item_type)
+     VALUES ($1, 'generic')
+     RETURNING item_id`,
+        [itemName]
+    );
+    return newGenericItem.rows[0].item_id;
+}
+
+export async function userCanEdit(
+    client: Client,
+    listId: number,
+    userId: number
+): Promise<boolean> {
+    // Check if user is the author
+    const authorCheck = await client.queryObject<{ author_id: number }>(
+        `SELECT author_id FROM shopping_lists 
+     WHERE list_id = $1`,
+        [listId]
+    );
+
+    if (authorCheck.rows.length === 0) {
+        throw new Error("Shopping list not found");
+    }
+
+    // Return true if user is the author
+    if (authorCheck.rows[0].author_id === userId) {
+        return true;
+    }
+
+    // Check contributor permissions
+    const contributorCheck = await client.queryObject<{ can_edit: boolean }>(
+        `SELECT can_edit FROM shopping_list_contributors 
+     WHERE list_id = $1 AND user_id = $2`,
+        [listId, userId]
+    );
+
+    // Return true if user is a contributor with edit permissions
+    return (
+        contributorCheck.rows.length > 0 && contributorCheck.rows[0].can_edit
+    );
+}
+
+export async function createNewList(
+    client: Client,
+    listName: string,
+    userId: number
+): Promise<{ success: boolean; listId: number; message: string }> {
+    try {
+        client.queryObject(`BEGIN`);
+
+        const existingList = await client.queryObject<{ list_id: number }>(
+            `SELECT list_id FROM shopping_lists 
+             WHERE list_name = $1 AND author_id = $2`,
+            [listName, userId]
+        );
+
+        if (existingList.rows.length > 0) {
+          await client.queryObject(`COMMIT`)
+            return {
+                success: false,
+                listId: existingList.rows[0].list_id,
+                message: "You already have a list with this name",
+            };
+        }
+
+        const listResult = await client.queryObject<{ list_id: number }>(
+            `INSERT INTO shopping_lists (list_name, author_id)
+            VALUES ($1, $2)
+            RETURNING list_id`,
+            [listName, userId]
+        );
+        const newListId = listResult.rows[0].list_id;
+
+        await client.queryObject(`COMMIT`);
+
+        return {
+            success: true,
+            listId: newListId,
+            message: "Shopping list created successfully",
+        };
+    } catch (error) {
+        await client.queryObject(`ROLLBACK`);
+        throw error;
+    }
 }

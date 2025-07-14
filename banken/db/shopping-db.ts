@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { number, z } from "zod";
 
 export const ShoppingListItemSchema = z.object({
     list_item_id: z.number().nullable(),
@@ -77,7 +77,17 @@ export const ShoppingListDetailSchema = z.object({
     items: z.array(ShoppingListItemSchema),
 });
 
+export const ShoppingItemSchema = z.object({
+    listId: z.string().transform(Number),
+    itemName: z.string(),
+    quantity: z.string().transform(Number),
+    unit: z.string(),
+    addedBy: z.string(),
+});
+
 export type ShoppingList = z.infer<typeof ShoppingListSchema>;
 export type ShoppingListItem = z.infer<typeof ShoppingListItemSchema>;
 export type Contributor = z.infer<typeof ContributorSchema>;
 export type ShoppingListDetail = z.infer<typeof ShoppingListDetailSchema>;
+export type ShoppingItemInput = z.input<typeof ShoppingItemSchema>;
+export type ShoppingItemOutput = z.output<typeof ShoppingItemSchema>;

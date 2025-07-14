@@ -7,6 +7,7 @@ import { LoginSchema } from "./login-attempt.ts";
 import { createUser, getUserByNameOrEmail, NewUser } from "../../db/user.ts";
 import { generateRefreshToken, generateToken } from "../../jwt/jwt.ts";
 import { Role } from "../../acm/permission.ts";
+import { addItemToList, createNewList, removeItemFromList, userCanEdit } from "../../db/shopping.ts";
 
 /*
 export async function exampleRouteFunction(ctx: HttpRequest): Promise<Response> {
@@ -175,27 +176,94 @@ export async function postCreateUser(ctx: HttpRequest): Promise<Response> {
 }
 
 export async function addShoppingItem(ctx: HttpRequest): Promise<Response> {
-    let formData;
-    if (ctx.formData != undefined) {
-        formData = ctx.formData;
-    } else {
-        ctx.res.json({message: "Failed to get formdata"}, 400);
+    const formData = ctx.formData;
+
+    if (!formData) {
+        return ctx.res.json({message: "Failed to get formdata"}, 400);
+    }
+
+    if (!ctx.user) {
+        return ctx.res.json({message: "No User"}, 400);
+    }
+
+    if (!userCanEdit(Http.client, Number.parseInt(formData.listId as string), ctx.user.id)) {
+        return ctx.res.json({message: "User can not edit this shopping list"}, 400);
     }
     
     console.log(formData)
+
+    try {
+        const result = await addItemToList(Http.client, {
+            listId: formData.listId as string,
+            itemName: formData.itemName as string,
+            quantity: formData.quantity as string,
+            unit: formData.unit as string,
+            addedBy: formData.addedBy as string,
+        });
+
+        console.log('item added successfully:', result);
+    } catch (error) {
+        console.error('Error adding item to list:', error)
+    }
 
     return ctx.res.json({ success: true })
 }
 
 export async function removeShoppingItem(ctx: HttpRequest): Promise<Response> {
-    let formData;
-    if (ctx.formData != undefined) {
-        formData = ctx.formData;
-    } else {
-        ctx.res.json({message: "Failed to get formdata"}, 400);
+    const formData = ctx.formData;
+
+    if (!formData) {
+        return ctx.res.json({message: "Failed to get formdata"}, 400);
     }
     
-    console.log(formData)
+    if (!ctx.user) {
+        return ctx.res.json({message: "No User"}, 400);
+    }
+
+    if (!userCanEdit(Http.client, Number.parseInt(formData.listId as string), ctx.user.id)) {
+        return ctx.res.json({message: "User can not edit this shopping list"}, 400);
+    }
+
+    try {
+        const result = await removeItemFromList(Http.client, {
+            listId: formData.listId as string,
+            itemName: formData.itemName as string,
+            quantity: formData.quantity as string,
+            unit: formData.unit as string,
+            addedBy: formData.addedBy as string,
+        });
+
+        console.log('item removed successfully:', result);
+    } catch (error) {
+        console.error('Error removing item from list:', error)
+    }
 
     return ctx.res.json({ success: true })
+}
+
+export async function createNewShoppingList(ctx: HttpRequest): Promise<Response> {
+    const formData = ctx.formData;
+    if (!formData) {
+        return ctx.res.json({message: "Failed to get formdata"}, 400);
+    }
+    
+    if (!ctx.user) {
+        return ctx.res.json({message: "User can not create shopping list"}, 400);
+    }
+
+    const userId = ctx.user.id;
+    const listName = formData.listName as string;
+
+    try {
+        const result = await createNewList(Http.client, listName, userId);
+
+        if (result.success) {
+            return ctx.res.redirect(`/list?id=${result.listId}`);
+        } else {
+            return ctx.res.json({message: result.message}, 400);
+        }
+    } catch (error) {
+        console.error('Failed to create new shopping list', error);
+        return ctx.res.redirectWithError("400")
+    }
 }

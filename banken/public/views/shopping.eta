@@ -34,14 +34,14 @@
         <h2 class="card-title text-xl mb-4">
           <i class="fas fa-plus-circle mr-2 text-primary"></i>Create New List
         </h2>
-        <form class="flex flex-col sm:flex-row gap-4">
+        <form class="flex flex-col sm:flex-row gap-4" action="/api/list/newList" method="POST">
           <div class="flex-grow">
-            <label class="label">
+            <label class="label" for="listName">
               <span class="label-text">List Name</span>
             </label>
-            <input type="text" placeholder="e.g. Weekly Groceries" class="input input-bordered w-full">
+            <input type="text" id="listName" name="listName" placeholder="e.g. Weekly Groceries" class="input input-bordered w-full">
           </div>
-          <div class="flex items-end">
+          <div class="flex items-end" type="submit">
             <button class="btn btn-primary">
               <i class="fas fa-plus mr-2"></i> Add List
             </button>
@@ -62,12 +62,12 @@
               <%= list.total_items %> items
             </div>
           </div>
-          <div class="card-actions justify-end mt-4" onclick="event.stopPropagation()">
-            <button onclick="redirect('/list?id=<%= list.list_id%>')" class="btn btn-sm btn-outline">
+          <div class="card-actions justify-end mt-4">
+            <button class="btn btn-sm btn-outline">
               <i class="fas fa-eye mr-1"></i> View
             </button>
             <% if (it.userId === list.author_id) {%>
-              <button class="btn btn-sm btn-outline btn-error">
+              <button class="btn btn-sm btn-outline btn-error" onclick="event.stopPropagation()">
                 <i class="fas fa-trash mr-1"></i> Delete
               </button>
             <% }%>
