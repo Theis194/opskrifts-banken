@@ -4,10 +4,10 @@ import { RecipeSchema } from "./recipe-create.ts";
 import { RecipeInserter } from "../../db/recipeInserter.ts";
 import { Http, HttpRequest } from "../wrapper.ts";
 import { LoginSchema } from "./login-attempt.ts";
-import { createUser, getUserByNameOrEmail, NewUser } from "../../db/user.ts";
+import { createUser, getUserByNameOrEmail, getUserIdByName, NewUser } from "../../db/user.ts";
 import { generateRefreshToken, generateToken } from "../../jwt/jwt.ts";
 import { Role } from "../../acm/permission.ts";
-import { addItemToList, createNewList, removeItemFromList, userCanEdit } from "../../db/shopping.ts";
+import { addItemToList, createNewList, removeItemFromList, shareList, userCanEdit, userIsAuthor } from "../../db/shopping.ts";
 
 /*
 export async function exampleRouteFunction(ctx: HttpRequest): Promise<Response> {
@@ -266,4 +266,33 @@ export async function createNewShoppingList(ctx: HttpRequest): Promise<Response>
         console.error('Failed to create new shopping list', error);
         return ctx.res.redirectWithError("400")
     }
+}
+
+export async function shareListWithUser(ctx: HttpRequest): Promise<Response> {
+    const formData = ctx.formData;
+    if (!formData) {
+        return ctx.res.json({message: "Failed to get formdata"}, 400);
+    }
+    
+    if (!ctx.user) {
+        return ctx.res.json({message: "User can not create shopping list"}, 400);
+    }
+
+    
+    const username = formData.username as string;
+    
+    const listId = Number.parseInt(formData.listId as string);
+    const userId = (await getUserIdByName(Http.client, username)).userid;
+    const addedBy = ctx.user.id;
+
+    const userCanShare = await userIsAuthor(Http.client, listId, addedBy);
+    if (userCanShare) {
+        const input = {listId, userId, addedBy};
+    
+        const _result = await shareList(Http.client, input)
+        
+        return ctx.res.redirect(`/list?id=${listId}`);
+    }
+
+    return ctx.res.json({message: "User is not allowed to share list"}, 400);
 }

@@ -14,9 +14,9 @@ import {
   getRecipeById,
 } from "../../db/recipes.ts";
 import { hasRessourcePermission } from "../../acm/permission.ts";
-import { getItemNames, getShoppingListById, getShoppingLists } from "../../db/shopping.ts";
-import { url } from "node:inspector";
+import { getItemNames, getShoppingListById, getShoppingLists, userIsAuthor } from "../../db/shopping.ts";
 import { ShoppingListDetail } from "../../db/shopping-db.ts";
+import { getUsernames } from "../../db/user.ts";
 
 /*
 export async function exampleRouteFunction(ctx: HttpRequest): Promise<Response> {
@@ -187,12 +187,14 @@ export async function getListById(ctx: HttpRequest): Promise<Response> {
   const listId = Number(ctx.params.id);
   const list = await getShoppingListById(Http.client, listId);
   const itemNames = await getItemNames(Http.client);
+  const isAuthor = await userIsAuthor(Http.client, listId, userId)
+  const usernames = (await getUsernames(Http.client)).usernames;
 
   if (!canViewList(userId, list)) {
     return ctx.res.redirect("/");
   }
 
-  const data = { list, isLoggedIn, isAdmin, userId, currentUsername, itemNames };
+  const data = { list, listId, isLoggedIn, isAdmin, userId, currentUsername, itemNames, isAuthor, usernames };
 
   return Http.renderTemplate("shopping_list.eta", data);
 }

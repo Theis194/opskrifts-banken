@@ -596,7 +596,7 @@ export async function createNewList(
         );
 
         if (existingList.rows.length > 0) {
-          await client.queryObject(`COMMIT`)
+            await client.queryObject(`COMMIT`);
             return {
                 success: false,
                 listId: existingList.rows[0].list_id,
@@ -623,4 +623,45 @@ export async function createNewList(
         await client.queryObject(`ROLLBACK`);
         throw error;
     }
+}
+
+export async function shareList(
+    client: Client,
+    input: { listId: number; userId: number; addedBy: number }
+) {
+    const query = `
+    INSERT INTO shopping_list_contributors (list_id, user_id, added_by)
+    values ($1, $2, $3)
+  `;
+
+    try {
+        const result = await client.queryObject(query, [
+            input.listId,
+            input.userId,
+            input.addedBy,
+        ]);
+        
+        // Check how many rows were inserted
+        if (result.rowCount === 1) {
+            return { success: true, message: "User added to list" };
+        }
+        return { success: false, message: "No rows inserted" };
+    } catch (error) {
+        if (error instanceof Error && error.message.includes("duplicate key")) {
+            console.error("User is already a contributor");
+            return { success: false, message: "User is already a contributor" };
+        }
+        console.error("Failed inserting new contributor", error);
+        throw error;
+    }
+}
+
+export async function userIsAuthor(client: Client, listId: number, userId: number): Promise<boolean> {
+    const authorCheck = await client.queryObject<{ author_id: number }>(
+        `SELECT author_id FROM shopping_lists 
+     WHERE list_id = $1`,
+        [listId]
+    );
+
+    return authorCheck.rows[0].author_id === userId;
 }
