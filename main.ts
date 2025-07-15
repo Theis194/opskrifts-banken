@@ -1,6 +1,6 @@
 import { Http } from "./banken/server/wrapper.ts";
-import { getAddRecipe, getIndex, getRecipePage, getRecipesPage, searchRecipes, getAllRecipesPage } from "./banken/server/routes/get.ts";
-import { postCreateUser, postLogin, postLogout, postNewRecipe } from "./banken/server/api/post.ts";
+import { getAddRecipe, getIndex, getRecipePage, getRecipesPage, searchRecipes, getAllRecipesPage, getMyLists, getListById } from "./banken/server/routes/get.ts";
+import { addShoppingItem, createNewShoppingList, postCreateUser, postLogin, postLogout, postNewRecipe, removeShoppingItem, shareListWithUser } from "./banken/server/api/post.ts";
 import { getAdmin, getAdminAddRecipe, getCreateUser } from "./banken/server/routes/admingGets.ts";
 
 const server = await Http.create("./banken/public");
@@ -13,6 +13,20 @@ server
         requireAuth: true,
         acm: {
             resource: "recipe",
+            permission: "read",
+        },
+    })
+    .addRoute("GET", "/my-lists", getMyLists, {
+        requireAuth: true,
+        acm: {
+            resource: "lists",
+            permission: "read",
+        },
+    })
+    .addRoute("GET", "/list", getListById, {
+        requireAuth: true,
+        acm: {
+            resource: "lists",
             permission: "read",
         },
     })
@@ -54,5 +68,33 @@ server
             resource: "admin",
             permission: "write",
         }
+    })
+    .addRoute("POST", "/api/list/addItem", addShoppingItem, {
+        requireAuth: true,
+        acm: {
+            resource: "lists",
+            permission: "write",
+        },
+    })
+    .addRoute("POST", "/api/list/removeItem", removeShoppingItem, {
+        requireAuth: true,
+        acm: {
+            resource: "lists",
+            permission: "delete",
+        },
+    })
+    .addRoute("POST", "/api/list/newList", createNewShoppingList, {
+        requireAuth: true,
+        acm: {
+            resource: "lists",
+            permission: "write",
+        },
+    })
+    .addRoute("POST", "/api/list/shareList", shareListWithUser, {
+        requireAuth: true,
+        acm: {
+            resource: "lists",
+            permission: "write",
+        },
     })
     .serve();

@@ -1,5 +1,5 @@
 import { hasRessourcePermission } from "../../acm/permission.ts";
-import { Http, QueryParams } from "../wrapper.ts";
+import { Http, HttpRequest } from "../wrapper.ts";
 import { SafeUser } from "../../db/user-db.ts";
 import {
     getKnownCategories,
@@ -8,32 +8,23 @@ import {
 } from "../../db/recipes.ts";
 
 /*
-export async function exampleRouteFunction(
-  req: Request,
-  user: SafeUser,
-  params: QueryParams,
-): Promise<Response> {
+export async function exampleRouteFunction(ctx: HttpRequest): Promise<Response> {
 }
  */
 
-export async function getAdmin(
-    _req: Request,
-    user: SafeUser,
-    _params: QueryParams,
-): Promise<Response> {
-    const isAdmin = hasRessourcePermission(user.role, "admin", "read");
-    const isLoggedIn = user ? true : false;
+export async function getAdmin(ctx: HttpRequest): Promise<Response> {
+    if (!ctx.user) {
+        return ctx.res.json({});
+    }
+    const isAdmin = hasRessourcePermission(ctx.user.role, "admin", "read");
+    const isLoggedIn = ctx.user ? true : false;
 
     const data = { isAdmin, isLoggedIn };
 
     return await Http.renderTemplate("admin", data);
 }
 
-export async function getAdminAddRecipe(
-    _req: Request,
-    user: SafeUser,
-    _params: QueryParams,
-): Promise<Response> {
+export async function getAdminAddRecipe(_ctx: HttpRequest): Promise<Response> {
     const ingredients = await getKnownIngredients(Http.client);
     const categories = await getKnownCategories(Http.client);
     const tags = await getKnownTags(Http.client);
@@ -43,10 +34,6 @@ export async function getAdminAddRecipe(
     return await Http.renderTemplate("/partials/add_recipe", data);
 }
 
-export async function getCreateUser(
-    _req: Request,
-    _user: SafeUser,
-    _params: QueryParams,
-): Promise<Response> {
+export async function getCreateUser(_ctx: HttpRequest): Promise<Response> {
     return Http.renderTemplate("/partials/create_user");
 }

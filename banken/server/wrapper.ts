@@ -15,31 +15,27 @@ import {
     Role,
 } from "../acm/permission.ts";
 import { SafeUser } from "../db/user-db.ts";
-
+import { ResponseHelpers } from "./responseHelpers.ts";
 
 type HttpMethods = "GET" | "POST" | "PUT" | "DELETE";
 
 export type QueryParams = Record<string, string | string[]>;
+export type FormDataParams = Record<string, unknown>;
 
-// For authenticated routes
-type AuthenticatedHandler = (
-    req: Request,
-    user: SafeUser, // No longer optional
-    params: QueryParams,
-) => Promise<Response>;
+export interface HttpRequest {
+    request: Request;
+    user?: SafeUser;
+    params: QueryParams;
+    formData?: FormDataParams;
+    cookies: Record<string, string>;
+    url: URL;
+    res: ResponseHelpers;
+}
 
-// For public routes
-type PublicHandler = (
-    req: Request,
-    user?: SafeUser, // Still optional
-    params: QueryParams,
-) => Promise<Response>;
+type Handler = (ctx: HttpRequest) => Promise<Response>;
 
 export class Http {
-    handlers: Record<
-        HttpMethods,
-        Record<string, (req: Request) => Promise<Response>>
-    >;
+    handlers: Record<HttpMethods, Record<string, Handler>>;
     staticDir: string;
     static client: Client;
     static eta: Eta;
@@ -54,7 +50,7 @@ export class Http {
         this.staticDir = staticDir;
 
         Http.client = client;
-        Http.eta = eta
+        Http.eta = eta;
     }
 
     static async create(staticDir: string): Promise<Http> {
@@ -80,53 +76,51 @@ export class Http {
     addRoute(
         method: HttpMethods,
         path: string,
-        handler: AuthenticatedHandler | PublicHandler,
+        handler: Handler,
         options: {
             requireAuth?: boolean;
             acm?: {
                 resource: Ressource;
                 permission: Permission;
             };
-        } = { requireAuth: true },
+        } = { requireAuth: true }
     ): Http {
-        this.handlers[method][path] = async (req: Request) => {
-            const url = new URL(req.url);
-            const params = Http.parseQueryParams(url);
-
+        this.handlers[method][path] = async (ctx: HttpRequest) => {
             // Always run auth middleware to get user if available
-            const { user, response } = await Http.authMiddleware(req);
+            const authResult = await Http.authMiddleware(ctx.request);
+            if (authResult.user) {
+                ctx.user = authResult.user;
+            }
 
             // If auth is required but no user exists
-            if (options.requireAuth && !user) {
-                return response || new Response("Unauthorized", { status: 401 });
+            if (options.requireAuth && !ctx.user) {
+                return (
+                    authResult.response ||
+                    new Response("Unauthorized", { status: 401 })
+                );
             }
 
             // If user exists and ACM permissions are required
-            if (user && options.acm) {
+            if (ctx.user && options.acm) {
                 if (
                     !hasRessourcePermission(
-                        user.role,
+                        ctx.user.role,
                         options.acm.resource,
-                        options.acm.permission,
+                        options.acm.permission
                     )
                 ) {
                     return new Response("Forbidden", { status: 403 });
                 }
             }
 
-            // Call handler with appropriate parameters
-            if (options.requireAuth) {
-                return (handler as AuthenticatedHandler)(req, user!, params); // We know user exists here
-            } else {
-                return (handler as PublicHandler)(req, user || undefined, params);
-            }
+            return handler(ctx);
         };
         return this;
     }
 
     static async serveStaticFile(
         req: Request,
-        filePath: string,
+        filePath: string
     ): Promise<Response> {
         try {
             const response = await serveFile(req, filePath);
@@ -140,7 +134,7 @@ export class Http {
 
     static renderTemplate(
         template: string,
-        data: Record<string, unknown> = {},
+        data: Record<string, unknown> = {}
     ): Response {
         const rendered = this.eta.render(template, data);
         return new Response(rendered, {
@@ -161,14 +155,10 @@ export class Http {
         return cookies;
     }
 
-    static async authMiddleware(
-        req: Request,
-    ): Promise<
-        {
-            user: { email: string; username: string; role: Role } | null;
-            response?: Response;
-        }
-    > {
+    static async authMiddleware(req: Request): Promise<{
+        user: { email: string; username: string; role: Role, id: number } | null;
+        response?: Response;
+    }> {
         const cookies = this.parseCookie(req);
         const token = cookies.jwt;
         const refreshToken = cookies.refreshToken;
@@ -180,17 +170,18 @@ export class Http {
                 return { user: payload };
             } catch (error) {
                 if (
-                    error instanceof Error && error.name === "TokenExpiredError" &&
+                    error instanceof Error &&
+                    error.name === "TokenExpiredError" &&
                     refreshToken
                 ) {
                     try {
                         const refreshPayload = verifyRefreshToken(refreshToken);
                         const newToken = generateToken(refreshPayload);
-                        const newRefreshToken = generateRefreshToken(refreshPayload);
+                        const newRefreshToken =
+                            generateRefreshToken(refreshPayload);
 
                         const headers = {
-                            "Set-Cookie":
-                                `jwt=${newToken}; Path=/; Secure; HttpOnly, refreshToken=${newRefreshToken}; Path=/; Secure; HttpOnly`,
+                            "Set-Cookie": `jwt=${newToken}; Path=/; Secure; HttpOnly, refreshToken=${newRefreshToken}; Path=/; Secure; HttpOnly`,
                         };
 
                         const response = this.redirect(url, headers);
@@ -210,8 +201,9 @@ export class Http {
     }
 
     static redirect(url: URL, headers?: HeadersInit): Response {
-        const redirectUrl = `${url.origin}/login?redirect=${encodeURIComponent(url.pathname)
-            }`;
+        const redirectUrl = `${url.origin}/?redirect=${encodeURIComponent(
+            url.pathname
+        )}`;
         return new Response(null, {
             status: 302,
             headers: {
@@ -238,7 +230,9 @@ export class Http {
         return params;
     }
 
-    static async formdataToObject(formData: FormData): Promise<Record<string, unknown>> {
+    static async formdataToObject(
+        formData: FormData
+    ): Promise<Record<string, unknown>> {
         const result: Record<string, unknown> = {};
 
         for (const [key, value] of formData.entries()) {
@@ -264,10 +258,32 @@ export class Http {
 
             const handler = this.handlers[method][url.pathname];
             if (handler) {
-                return handler(req);
+                const ctx: HttpRequest = {
+                    request: req,
+                    params: Http.parseQueryParams(url),
+                    cookies: Http.parseCookie(req),
+                    url,
+                    res: null as any,
+                };
+
+                ctx.res = new ResponseHelpers(ctx);
+
+                // Add form data if needed
+                if (method === "POST" || method === "PUT") {
+                    try {
+                        const formData = await req.formData();
+                        ctx.formData = await Http.formdataToObject(formData);
+                    } catch (error) {
+                        console.error("Error parsing form data:", error);
+                    }
+                }
+
+                return handler(ctx);
             }
 
-            const filePath = `${this.staticDir}${decodeURIComponent(url.pathname)}`;
+            const filePath = `${this.staticDir}${decodeURIComponent(
+                url.pathname
+            )}`;
             try {
                 const fileInfo = await Deno.stat(filePath);
                 if (fileInfo.isFile) {
@@ -281,4 +297,3 @@ export class Http {
         });
     }
 }
-

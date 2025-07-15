@@ -1,5 +1,5 @@
     <% it.recipes.forEach(recipe => { %>
-    <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-200">
+    <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-200" onclick="redirect('/recipe?id=<%=recipe.id%>')">
       <!-- Cover Image -->
       <figure class="h-48 overflow-hidden">
         <% if (recipe.coverImage) { %>
@@ -42,8 +42,9 @@
         </div>
 
         <!-- Actions -->
-        <div class="card-actions justify-end mt-4">
-          <button 
+        <div class="card-actions justify-end mt-4" onclick="event.stopPropagation()">
+          <button
+            onclick="redirect('/recipe?id=<%=recipe.id%>')"
             class="btn btn-sm btn-ghost" 
             hx-get="/admin/recipes/<%= recipe.id %>" 
             hx-target="#content-area"
