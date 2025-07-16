@@ -166,7 +166,7 @@
     } catch (error) {
       console.error('Error during logout:', error);
     }
-  }); 
+  });
 </script>
 
 <script>
@@ -176,7 +176,7 @@
     const errorContainer = document.getElementById('login_error');
     const errorMessage = document.getElementById('error_message');
     const submitButton = form.querySelector('button[type="submit"]');
-    
+
     // Reset UI state
     errorContainer.classList.add('hidden');
     submitButton.disabled = true;
@@ -190,32 +190,29 @@
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        redirect: 'manual' // Important: prevent redirects
       });
 
-      if (response.status === 200) {
+      console.log(response.status);
+
+      if (response.ok) {
         // Successful login - handle redirect manually
         const redirectUrl = response.headers.get('Location') || '/';
         window.location.href = redirectUrl;
-      } else if (response.status === 400) {
-        // Handle validation errors
-        const result = await response.json();
-        // Display the error message
-        errorMessage.textContent = result.issues || 'Invalid input';
-        errorContainer.classList.remove('hidden');
-        
-        // Highlight problematic fields
-        if (result.field) {
-          const input = form.querySelector(`[name="${result.field}"]`);
-          if (input) {
-            input.classList.add('input-error');
-            input.focus();
-          }
-        }
       } else {
-        // Other errors
-        errorMessage.textContent = 'Login failed. Please try again.';
+        // Handle error response
+        const result = await response.json();
+
+        // Display error message
+        errorMessage.textContent = result.message || 'Login failed';
         errorContainer.classList.remove('hidden');
+
+        // Optional: Highlight problematic fields (if using Zod issues)
+        if (result.issues) {
+          result.issues.forEach(issue => {
+            const input = form.querySelector(`[name="${issue.path[0]}"]`);
+            if (input) input.classList.add('input-error');
+          });
+        }
       }
     } catch (error) {
       errorMessage.textContent = 'Network error. Please try again later.';

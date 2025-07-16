@@ -4,10 +4,22 @@ import { RecipeSchema } from "./recipe-create.ts";
 import { RecipeInserter } from "../../db/recipeInserter.ts";
 import { Http, HttpRequest } from "../wrapper.ts";
 import { LoginSchema } from "./login-attempt.ts";
-import { createUser, getUserByNameOrEmail, getUserIdByName, NewUser } from "../../db/user.ts";
+import {
+    createUser,
+    getUserByNameOrEmail,
+    getUserIdByName,
+    NewUser,
+} from "../../db/user.ts";
 import { generateRefreshToken, generateToken } from "../../jwt/jwt.ts";
 import { Role } from "../../acm/permission.ts";
-import { addItemToList, createNewList, removeItemFromList, shareList, userCanEdit, userIsAuthor } from "../../db/shopping.ts";
+import {
+    addItemToList,
+    createNewList,
+    removeItemFromList,
+    shareList,
+    userCanEdit,
+    userIsAuthor,
+} from "../../db/shopping.ts";
 
 /*
 export async function exampleRouteFunction(ctx: HttpRequest): Promise<Response> {
@@ -46,9 +58,15 @@ export async function postNewRecipe(ctx: HttpRequest): Promise<Response> {
 type LoginRawData = { username: string; password: string };
 export async function postLogin(ctx: HttpRequest): Promise<Response> {
     try {
-        // Since formData is already parsed in middleware, we can use ctx.formData directly
         if (!ctx.formData) {
-            return ctx.res.redirectWithError("missing_form_data");
+            return ctx.res.json(
+                {
+                    success: false,
+                    error: "missing_form_data",
+                    message: "Form data is required",
+                },
+                400
+            );
         }
 
         const parsedLogin: LoginRawData = {
@@ -64,7 +82,14 @@ export async function postLogin(ctx: HttpRequest): Promise<Response> {
         );
 
         if (!queryResult) {
-            return ctx.res.redirectWithError("invalid_credentials");
+            return ctx.res.json(
+                {
+                    success: false,
+                    error: "invalid_credentials",
+                    message: "Invalid username or password",
+                },
+                400
+            );
         }
 
         const correctPassword = await bcrypt.compare(
@@ -73,52 +98,51 @@ export async function postLogin(ctx: HttpRequest): Promise<Response> {
         );
 
         if (!correctPassword) {
-            return ctx.res.redirectWithError("invalid_credentials");
+            return ctx.res.json(
+                {
+                    success: false,
+                    error: "invalid_credentials",
+                    message: "Invalid username or password",
+                },
+                400
+            );
         }
 
         const user = {
             username: queryResult.username,
             email: queryResult.email,
             role: queryResult.role as Role,
-            id: queryResult.user_id
+            id: queryResult.user_id,
         };
 
         const token = generateToken(user);
         const refreshToken = generateRefreshToken(user);
 
-        ctx.res
+        return ctx.res
             .setCookies({
-                jwt: token,
-                refreshToken: refreshToken,
+                jwt: {
+                    value: token,
+                    options: { maxAge: 86400 }, // 1 day
+                },
+                refreshToken: {
+                    value: refreshToken,
+                    options: { maxAge: 604800, sameSite: "None" }, // 7 days, cross-domain
+                },
             })
             .redirect(ctx.url.searchParams.get("redirect") || "/");
-
-        // Use ctx.url instead of req.url
-        const redirectUrl = ctx.url.searchParams.get("redirect") || "/";
-
-        const headers = new Headers({
-            location: redirectUrl,
-        });
-
-        headers.append(
-            "Set-Cookie",
-            `jwt=${token}; HttpOnly; Secure; Path=/; SameSite=Strict`
-        );
-        headers.append(
-            "Set-Cookie",
-            `refreshToken=${refreshToken}; HttpOnly; Secure; Path=/; SameSite=Strict`
-        );
-
-        return new Response(null, {
-            status: 302, // Changed to 302 for proper redirect
-            headers,
-        });
     } catch (error) {
         console.error(error);
 
         if (error instanceof z.ZodError) {
-            // Redirect back to login with error message
-            return ctx.res.redirectWithError("incalid_input");
+            return ctx.res.json(
+                {
+                    success: false,
+                    error: "invalid_input",
+                    message: "Invalid input data",
+                    issues: error.errors, // Optional: Send Zod validation errors
+                },
+                400
+            );
         }
 
         // For other errors, redirect to login with generic error
@@ -179,18 +203,27 @@ export async function addShoppingItem(ctx: HttpRequest): Promise<Response> {
     const formData = ctx.formData;
 
     if (!formData) {
-        return ctx.res.json({message: "Failed to get formdata"}, 400);
+        return ctx.res.json({ message: "Failed to get formdata" }, 400);
     }
 
     if (!ctx.user) {
-        return ctx.res.json({message: "No User"}, 400);
+        return ctx.res.json({ message: "No User" }, 400);
     }
 
-    if (!userCanEdit(Http.client, Number.parseInt(formData.listId as string), ctx.user.id)) {
-        return ctx.res.json({message: "User can not edit this shopping list"}, 400);
+    if (
+        !userCanEdit(
+            Http.client,
+            Number.parseInt(formData.listId as string),
+            ctx.user.id
+        )
+    ) {
+        return ctx.res.json(
+            { message: "User can not edit this shopping list" },
+            400
+        );
     }
-    
-    console.log(formData)
+
+    console.log(formData);
 
     try {
         const result = await addItemToList(Http.client, {
@@ -201,27 +234,36 @@ export async function addShoppingItem(ctx: HttpRequest): Promise<Response> {
             addedBy: formData.addedBy as string,
         });
 
-        console.log('item added successfully:', result);
+        console.log("item added successfully:", result);
     } catch (error) {
-        console.error('Error adding item to list:', error)
+        console.error("Error adding item to list:", error);
     }
 
-    return ctx.res.json({ success: true })
+    return ctx.res.json({ success: true });
 }
 
 export async function removeShoppingItem(ctx: HttpRequest): Promise<Response> {
     const formData = ctx.formData;
 
     if (!formData) {
-        return ctx.res.json({message: "Failed to get formdata"}, 400);
-    }
-    
-    if (!ctx.user) {
-        return ctx.res.json({message: "No User"}, 400);
+        return ctx.res.json({ message: "Failed to get formdata" }, 400);
     }
 
-    if (!userCanEdit(Http.client, Number.parseInt(formData.listId as string), ctx.user.id)) {
-        return ctx.res.json({message: "User can not edit this shopping list"}, 400);
+    if (!ctx.user) {
+        return ctx.res.json({ message: "No User" }, 400);
+    }
+
+    if (
+        !userCanEdit(
+            Http.client,
+            Number.parseInt(formData.listId as string),
+            ctx.user.id
+        )
+    ) {
+        return ctx.res.json(
+            { message: "User can not edit this shopping list" },
+            400
+        );
     }
 
     try {
@@ -233,22 +275,27 @@ export async function removeShoppingItem(ctx: HttpRequest): Promise<Response> {
             addedBy: formData.addedBy as string,
         });
 
-        console.log('item removed successfully:', result);
+        console.log("item removed successfully:", result);
     } catch (error) {
-        console.error('Error removing item from list:', error)
+        console.error("Error removing item from list:", error);
     }
 
-    return ctx.res.json({ success: true })
+    return ctx.res.json({ success: true });
 }
 
-export async function createNewShoppingList(ctx: HttpRequest): Promise<Response> {
+export async function createNewShoppingList(
+    ctx: HttpRequest
+): Promise<Response> {
     const formData = ctx.formData;
     if (!formData) {
-        return ctx.res.json({message: "Failed to get formdata"}, 400);
+        return ctx.res.json({ message: "Failed to get formdata" }, 400);
     }
-    
+
     if (!ctx.user) {
-        return ctx.res.json({message: "User can not create shopping list"}, 400);
+        return ctx.res.json(
+            { message: "User can not create shopping list" },
+            400
+        );
     }
 
     const userId = ctx.user.id;
@@ -260,39 +307,41 @@ export async function createNewShoppingList(ctx: HttpRequest): Promise<Response>
         if (result.success) {
             return ctx.res.redirect(`/list?id=${result.listId}`);
         } else {
-            return ctx.res.json({message: result.message}, 400);
+            return ctx.res.json({ message: result.message }, 400);
         }
     } catch (error) {
-        console.error('Failed to create new shopping list', error);
-        return ctx.res.redirectWithError("400")
+        console.error("Failed to create new shopping list", error);
+        return ctx.res.redirectWithError("400");
     }
 }
 
 export async function shareListWithUser(ctx: HttpRequest): Promise<Response> {
     const formData = ctx.formData;
     if (!formData) {
-        return ctx.res.json({message: "Failed to get formdata"}, 400);
-    }
-    
-    if (!ctx.user) {
-        return ctx.res.json({message: "User can not create shopping list"}, 400);
+        return ctx.res.json({ message: "Failed to get formdata" }, 400);
     }
 
-    
+    if (!ctx.user) {
+        return ctx.res.json(
+            { message: "User can not create shopping list" },
+            400
+        );
+    }
+
     const username = formData.username as string;
-    
+
     const listId = Number.parseInt(formData.listId as string);
     const userId = (await getUserIdByName(Http.client, username)).userid;
     const addedBy = ctx.user.id;
 
     const userCanShare = await userIsAuthor(Http.client, listId, addedBy);
     if (userCanShare) {
-        const input = {listId, userId, addedBy};
-    
-        const _result = await shareList(Http.client, input)
-        
+        const input = { listId, userId, addedBy };
+
+        const _result = await shareList(Http.client, input);
+
         return ctx.res.redirect(`/list?id=${listId}`);
     }
 
-    return ctx.res.json({message: "User is not allowed to share list"}, 400);
+    return ctx.res.json({ message: "User is not allowed to share list" }, 400);
 }

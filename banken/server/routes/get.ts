@@ -13,7 +13,7 @@ import {
   getRecentlyAdded,
   getRecipeById,
 } from "../../db/recipes.ts";
-import { hasRessourcePermission } from "../../acm/permission.ts";
+import { hasResourcePermission } from "../../acm/permission.ts";
 import { getItemNames, getShoppingListById, getShoppingLists, userIsAuthor } from "../../db/shopping.ts";
 import { ShoppingListDetail } from "../../db/shopping-db.ts";
 import { getUsernames } from "../../db/user.ts";
@@ -25,7 +25,7 @@ export async function exampleRouteFunction(ctx: HttpRequest): Promise<Response> 
 
 export async function getIndex(ctx: HttpRequest): Promise<Response> {
   const isAdmin = ctx.user
-    ? hasRessourcePermission(ctx.user.role, "recipe", "read")
+    ? hasResourcePermission(ctx.user.role, "recipe", "read")
     : false;
   const isLoggedIn = ctx.user ? true : false;
   const recipes = await getFeaturedRecipes(Http.client);
@@ -38,7 +38,7 @@ export async function getIndex(ctx: HttpRequest): Promise<Response> {
 
 export async function getAddRecipe(ctx: HttpRequest): Promise<Response> {
   const isAdmin = ctx.user
-    ? hasRessourcePermission(ctx.user.role, "recipe", "read")
+    ? hasResourcePermission(ctx.user.role, "recipe", "read")
     : false;
   const isLoggedIn = ctx.user ? true : false;
   const ingredients = await getKnownIngredients(Http.client);
@@ -52,7 +52,7 @@ export async function getAddRecipe(ctx: HttpRequest): Promise<Response> {
 
 export async function getRecipePage(ctx: HttpRequest): Promise<Response> {
   const isAdmin = ctx.user
-    ? hasRessourcePermission(ctx.user.role, "recipe", "read")
+    ? hasResourcePermission(ctx.user.role, "recipe", "read")
     : false;
   const isLoggedIn = ctx.user ? true : false;
   const recipeId = Number(ctx.params.id);
@@ -69,7 +69,7 @@ export async function getRecipesPage(ctx: HttpRequest): Promise<Response> {
   const client = Http.client;
 
   const isAdmin = ctx.user
-    ? hasRessourcePermission(ctx.user.role, "recipe", "read")
+    ? hasResourcePermission(ctx.user.role, "recipe", "read")
     : false;
 
   let page = Number(ctx.params.page);
@@ -98,7 +98,7 @@ export async function searchRecipes(ctx: HttpRequest): Promise<Response> {
   const client = Http.client;
 
   const isAdmin = ctx.user
-    ? hasRessourcePermission(ctx.user.role, "recipe", "read")
+    ? hasResourcePermission(ctx.user.role, "recipe", "read")
     : false;
 
   const search = ctx.params.query as string;
@@ -130,7 +130,7 @@ export async function getAllRecipesPage(ctx: HttpRequest): Promise<Response> {
   const client = Http.client;
 
   const isAdmin = ctx.user
-    ? hasRessourcePermission(ctx.user.role, "recipe", "read")
+    ? hasResourcePermission(ctx.user.role, "recipe", "read")
     : false;
 
   const isLoggedIn = ctx.user ? true : false;
@@ -160,7 +160,7 @@ export async function getAllRecipesPage(ctx: HttpRequest): Promise<Response> {
 
 export async function getMyLists(ctx: HttpRequest): Promise<Response> {
   const isAdmin = ctx.user != undefined
-    ? hasRessourcePermission(ctx.user.role, "recipe", "read")
+    ? hasResourcePermission(ctx.user.role, "recipe", "read")
     : false;
 
   const isLoggedIn = ctx.user ? true : false;
@@ -173,7 +173,7 @@ export async function getMyLists(ctx: HttpRequest): Promise<Response> {
 
 export async function getListById(ctx: HttpRequest): Promise<Response> {
   const isAdmin = ctx.user
-    ? hasRessourcePermission(ctx.user.role, "recipe", "read")
+    ? hasResourcePermission(ctx.user.role, "recipe", "read")
     : false;
 
   const isLoggedIn = ctx.user ? true : false;
