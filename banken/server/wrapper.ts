@@ -156,7 +156,7 @@ export class Http {
     }
 
     static async authMiddleware(req: Request): Promise<{
-        user: { email: string; username: string; role: Role } | null;
+        user: { email: string; username: string; role: Role, id: number } | null;
         response?: Response;
     }> {
         const cookies = this.parseCookie(req);
@@ -201,7 +201,7 @@ export class Http {
     }
 
     static redirect(url: URL, headers?: HeadersInit): Response {
-        const redirectUrl = `${url.origin}/login?redirect=${encodeURIComponent(
+        const redirectUrl = `${url.origin}/?redirect=${encodeURIComponent(
             url.pathname
         )}`;
         return new Response(null, {

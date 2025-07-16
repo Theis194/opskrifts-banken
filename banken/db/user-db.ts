@@ -15,4 +15,4 @@ export const UserSchema = z.object({
 
 export type User = z.infer<typeof UserSchema>;
 
-export type SafeUser = { username: string, email: string, role: Role };
+export type SafeUser = { username: string, email: string, role: Role, id: number };

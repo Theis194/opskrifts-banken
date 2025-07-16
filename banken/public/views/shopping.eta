@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cupcake">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    Shopping Lists | My Recipe Collection
+  </title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- DaisyUI -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="../js/redirect.js"></script>
+</head>
+
+<body class="min-h-screen flex flex-col">
+  <%~ include("./partials/nav", it) %>
+
+  <main class="flex-grow container mx-auto px-4 py-8">
+    <!-- Header -->
+    <header class="mb-8 text-center">
+      <h1 class="text-4xl font-bold text-primary mb-2">
+        <i class="fas fa-shopping-cart mr-2"></i>My Shopping Lists
+      </h1>
+      <p class="text-gray-600">Manage your shopping lists easily</p>
+    </header>
+
+    <!-- Add New List Form -->
+    <div class="card bg-base-100 shadow-md mb-8">
+      <div class="card-body">
+        <h2 class="card-title text-xl mb-4">
+          <i class="fas fa-plus-circle mr-2 text-primary"></i>Create New List
+        </h2>
+        <form class="flex flex-col sm:flex-row gap-4" action="/api/list/newList" method="POST">
+          <div class="flex-grow">
+            <label class="label" for="listName">
+              <span class="label-text">List Name</span>
+            </label>
+            <input type="text" id="listName" name="listName" placeholder="e.g. Weekly Groceries" class="input input-bordered w-full">
+          </div>
+          <div class="flex items-end" type="submit">
+            <button class="btn btn-primary">
+              <i class="fas fa-plus mr-2"></i> Add List
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Shopping Lists Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- List Item 1 -->
+      <% it.shoppingLists.forEach(function(list) {%>
+      <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow" onclick="redirect('/list?id=<%= list.list_id%>')">
+        <div class="card-body">
+          <div class="flex justify-between items-start">
+            <h3 class="card-title text-xl"><%= list.list_name %></h3>
+            <div class="badge badge-primary badge-lg">
+              <%= list.total_items %> items
+            </div>
+          </div>
+          <div class="card-actions justify-end mt-4">
+            <button class="btn btn-sm btn-outline">
+              <i class="fas fa-eye mr-1"></i> View
+            </button>
+            <% if (it.userId === list.author_id) {%>
+              <button class="btn btn-sm btn-outline btn-error" onclick="event.stopPropagation()">
+                <i class="fas fa-trash mr-1"></i> Delete
+              </button>
+            <% }%>
+          </div>
+        </div>
+      </div>
+      <% }) %>
+
+    </div>
+
+  </main>
+
+  <%~ include("./partials/footer") %>
+</body>
+
+</html>
