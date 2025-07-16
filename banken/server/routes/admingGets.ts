@@ -1,4 +1,4 @@
-import { hasRessourcePermission } from "../../acm/permission.ts";
+import { hasResourcePermission } from "../../acm/permission.ts";
 import { Http, HttpRequest } from "../wrapper.ts";
 import { SafeUser } from "../../db/user-db.ts";
 import {
@@ -16,7 +16,7 @@ export async function getAdmin(ctx: HttpRequest): Promise<Response> {
     if (!ctx.user) {
         return ctx.res.json({});
     }
-    const isAdmin = hasRessourcePermission(ctx.user.role, "admin", "read");
+    const isAdmin = hasResourcePermission(ctx.user.role, "admin", "read");
     const isLoggedIn = ctx.user ? true : false;
 
     const data = { isAdmin, isLoggedIn };

@@ -9,9 +9,9 @@ import {
     verifyToken,
 } from "../jwt/jwt.ts";
 import {
-    hasRessourcePermission,
+    hasResourcePermission,
     Permission,
-    Ressource,
+    Resource,
     Role,
 } from "../acm/permission.ts";
 import { SafeUser } from "../db/user-db.ts";
@@ -39,6 +39,7 @@ export class Http {
     staticDir: string;
     static client: Client;
     static eta: Eta;
+    static env: Record<string, string>;
 
     constructor(staticDir: string, client: Client, eta: Eta) {
         this.handlers = {
@@ -54,11 +55,11 @@ export class Http {
     }
 
     static async create(staticDir: string): Promise<Http> {
-        const env = await load();
+        Http.env = await load();
 
-        const dbPassword = Deno.env.get("DB_PASSWORD") || env["DB_PASSWORD"];
-        const dbUser = Deno.env.get("DB_USER") || env["DB_USER"];
-        const hostname = Deno.env.get("DB_HOSTNAME") || env["DB_HOSTNAME"];
+        const dbPassword = Deno.env.get("DB_PASSWORD") || Http.env["DB_PASSWORD"];
+        const dbUser = Deno.env.get("DB_USER") || Http.env["DB_USER"];
+        const hostname = Deno.env.get("DB_HOSTNAME") || Http.env["DB_HOSTNAME"];
 
         const client = new Client({
             user: dbUser,
@@ -80,7 +81,7 @@ export class Http {
         options: {
             requireAuth?: boolean;
             acm?: {
-                resource: Ressource;
+                resource: Resource;
                 permission: Permission;
             };
         } = { requireAuth: true }
@@ -103,7 +104,7 @@ export class Http {
             // If user exists and ACM permissions are required
             if (ctx.user && options.acm) {
                 if (
-                    !hasRessourcePermission(
+                    !hasResourcePermission(
                         ctx.user.role,
                         options.acm.resource,
                         options.acm.permission

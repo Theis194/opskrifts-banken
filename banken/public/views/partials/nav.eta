@@ -8,6 +8,27 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
         </svg>
       </label>
+      <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-primary rounded-box w-52">
+        <li><a href="/"><i class="fas fa-home mr-2"></i>Home</a></li>
+        <li><a href="/all-recipes"><i class="fas fa-book mr-2"></i>All Recipes</a></li>
+        <li><a href="/my-lists"><i class="fas fa-shopping-basket mr-2"></i>Shopping Lists</a></li>
+        <li>
+          <details>
+            <summary><i class="fas fa-tags mr-2"></i>Categories</summary>
+            <ul>
+              <li><a>Breakfast</a></li>
+              <li><a>Lunch</a></li>
+              <li><a>Dinner</a></li>
+              <li><a>Desserts</a></li>
+              <li><a>Vegetarian</a></li>
+              <li><a>Quick Meals</a></li>
+            </ul>
+          </details>
+        </li>
+        <% if (it.isAdmin) { %>
+        <li><a href="/tilfoj-opskrift"><i class="fas fa-plus-circle mr-2"></i>Add Recipe</a></li>
+        <% } %>
+      </ul>
     </div>
     <a href="/" class="btn btn-ghost normal-case text-xl">
       <i class="fas fa-utensils mr-2"></i>My Recipe Box
@@ -39,14 +60,6 @@
   </div>
 
   <div class="navbar-end gap-2">
-    <div class="form-control">
-      <div class="input-group">
-        <input type="text" placeholder="Search recipes..." class="input input-bordered text-neutral" />
-        <button class="btn btn-square">
-          <i class="fas fa-search"></i>
-        </button>
-      </div>
-    </div>
     <!-- User Icon - Conditional based on login status -->
     <div class="dropdown dropdown-end">
       <label tabindex="0" class="btn btn-ghost btn-circle avatar">
@@ -166,7 +179,7 @@
     } catch (error) {
       console.error('Error during logout:', error);
     }
-  }); 
+  });
 </script>
 
 <script>
@@ -176,7 +189,7 @@
     const errorContainer = document.getElementById('login_error');
     const errorMessage = document.getElementById('error_message');
     const submitButton = form.querySelector('button[type="submit"]');
-    
+
     // Reset UI state
     errorContainer.classList.add('hidden');
     submitButton.disabled = true;
@@ -190,32 +203,29 @@
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        redirect: 'manual' // Important: prevent redirects
       });
 
-      if (response.status === 200) {
+      console.log(response.status);
+
+      if (response.ok) {
         // Successful login - handle redirect manually
         const redirectUrl = response.headers.get('Location') || '/';
         window.location.href = redirectUrl;
-      } else if (response.status === 400) {
-        // Handle validation errors
-        const result = await response.json();
-        // Display the error message
-        errorMessage.textContent = result.issues || 'Invalid input';
-        errorContainer.classList.remove('hidden');
-        
-        // Highlight problematic fields
-        if (result.field) {
-          const input = form.querySelector(`[name="${result.field}"]`);
-          if (input) {
-            input.classList.add('input-error');
-            input.focus();
-          }
-        }
       } else {
-        // Other errors
-        errorMessage.textContent = 'Login failed. Please try again.';
+        // Handle error response
+        const result = await response.json();
+
+        // Display error message
+        errorMessage.textContent = result.message || 'Login failed';
         errorContainer.classList.remove('hidden');
+
+        // Optional: Highlight problematic fields (if using Zod issues)
+        if (result.issues) {
+          result.issues.forEach(issue => {
+            const input = form.querySelector(`[name="${issue.path[0]}"]`);
+            if (input) input.classList.add('input-error');
+          });
+        }
       }
     } catch (error) {
       errorMessage.textContent = 'Network error. Please try again later.';

@@ -2,9 +2,9 @@ import { SafeUser } from "../db/user-db.ts";
 
 export type Role = 'admin' | 'editor' | 'user' | 'guest';
 export type Permission = 'read' | 'write' | 'delete';
-export type Ressource = 'recipe' | 'comment' | 'admin' | 'lists';
+export type Resource = 'recipe' | 'comment' | 'admin' | 'lists';
 
-const ressourcePermissions: Record<Ressource, Record<Role, Permission[]>> = {
+const resourcePermissions: Record<Resource, Record<Role, Permission[]>> = {
     recipe: {
         admin: ['read', 'write', 'delete'],
         editor: ['read', 'write'],
@@ -32,10 +32,10 @@ const ressourcePermissions: Record<Ressource, Record<Role, Permission[]>> = {
     }
 };
 
-export function hasRessourcePermission(role: Role, ressource: Ressource, permission: Permission): boolean {
-    return ressourcePermissions[ressource][role].includes(permission);
+export function hasResourcePermission(role: Role, ressource: Resource, permission: Permission): boolean {
+    return resourcePermissions[ressource][role].includes(permission);
 }
 
-export function authorizeRessource(user: SafeUser, ressource: Ressource, permission: Permission): boolean {
-    return hasRessourcePermission(user.role, ressource, permission);
+export function authorizeRessource(user: SafeUser, ressource: Resource, permission: Permission): boolean {
+    return hasResourcePermission(user.role, ressource, permission);
 }
