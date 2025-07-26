@@ -204,8 +204,6 @@
         },
       });
 
-      console.log(response.status);
-
       if (response.ok) {
         // Successful login - handle redirect manually
         const redirectUrl = response.headers.get('Location') || '/';

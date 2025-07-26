@@ -223,18 +223,14 @@ export async function addShoppingItem(ctx: HttpRequest): Promise<Response> {
         );
     }
 
-    console.log(formData);
-
     try {
-        const result = await addItemToList(Http.client, {
+        const _result = await addItemToList(Http.client, {
             listId: formData.listId as string,
             itemName: formData.itemName as string,
             quantity: formData.quantity as string,
             unit: formData.unit as string,
             addedBy: formData.addedBy as string,
         });
-
-        console.log("item added successfully:", result);
     } catch (error) {
         console.error("Error adding item to list:", error);
     }
@@ -267,7 +263,7 @@ export async function removeShoppingItem(ctx: HttpRequest): Promise<Response> {
     }
 
     try {
-        const result = await removeItemFromList(Http.client, {
+        const _result = await removeItemFromList(Http.client, {
             listId: formData.listId as string,
             itemName: formData.itemName as string,
             quantity: formData.quantity as string,
@@ -275,7 +271,6 @@ export async function removeShoppingItem(ctx: HttpRequest): Promise<Response> {
             addedBy: formData.addedBy as string,
         });
 
-        console.log("item removed successfully:", result);
     } catch (error) {
         console.error("Error removing item from list:", error);
     }

@@ -102,7 +102,6 @@ export async function searchRecipes(ctx: HttpRequest): Promise<Response> {
     : false;
 
   const search = ctx.params.query as string;
-  console.log("Search: " + search);
 
   let page = Number(ctx.params.page);
   if (Number.isNaN(page) || page < 1) page = 1;
@@ -165,7 +164,6 @@ export async function getMyLists(ctx: HttpRequest): Promise<Response> {
 
   const isLoggedIn = ctx.user ? true : false;
   const userId = ctx.user?.id ? ctx.user.id : NaN;
-  console.log(ctx);
 
   const shoppingLists = await getShoppingLists(Http.client, userId);
   const data = { shoppingLists, isLoggedIn, isAdmin, userId };
