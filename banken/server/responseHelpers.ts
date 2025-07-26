@@ -98,7 +98,6 @@ export class ResponseHelpers {
                 cookieStr += `; SameSite=${mergedOptions.sameSite}`;
             }
 
-            console.log(cookieStr);
             this.headers.append("set-cookie", cookieStr + ",");
         });
 

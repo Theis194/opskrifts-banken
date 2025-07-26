@@ -62,9 +62,9 @@
             on <span id="created-date"><%= formatDate(it.list.created_at)%></span>
           </p>
         </div>
-        <div class="badge badge-lg badge-primary" id="item-count">
-          <i class="fas fa-shopping-basket mr-1"></i>
-          <span><%= it.list.total_items %> items</span>
+        <div class="badge badge-lg badge-primary flex items-center gap-1 whitespace-nowrap" id="item-count">
+          <i class="fas fa-shopping-basket text-sm"></i>
+          <span class="font-normal"><%= it.list.total_items %> items</span>
         </div>
       </div>
 
@@ -114,36 +114,38 @@
         </div>
 
         <!-- Add new item -->
-        <div class="px-6 py-4 bg-gray-50">
-          <div class="flex items-center relative" x-data="shoppingListAutocomplete()">
-            <button class="btn btn-sm btn-ghost mr-2" @click="addItemToList()">
-              <i class="fas fa-plus"></i>
-            </button>
+        <div class="px-4 sm:px-6 py-4 bg-base-100 border-t border-base-200">
+          <div x-data="shoppingListAutocomplete()" class="space-y-2 sm:space-y-0 sm:flex sm:gap-2">
+            <!-- Main Input with autocomplete - full width on mobile -->
+            <div class="relative flex-1" :class="{'sm:w-2/3': unit || quantity}">
+              <div class="relative">
+                <input type="text" placeholder="Add new item..." class="input input-bordered w-full pl-3 pr-10" x-model="query" @input.debounce.300ms="filterItems" @focus="open = true" @keydown.escape="open = false" @keydown.arrow-down.prevent="moveDown" @keydown.arrow-up.prevent="moveUp" @keydown.enter.prevent="selectItem">
 
-            <!-- Input with autocomplete -->
-            <div class="relative w-full max-w-xs">
-              <input type="text" placeholder="Add new item..." class="input input-bordered input-sm w-full" x-model="query" @input.debounce.300ms="filterItems" @focus="open = true" @keydown.escape="open = false" @keydown.arrow-down.prevent="moveDown" @keydown.arrow-up.prevent="moveUp" @keydown.enter.prevent="selectItem" />
+                <!-- Plus button moved to right side -->
+                <button class="absolute right-2 top-1/2 transform -translate-y-1/2 btn btn-ghost btn-sm btn-circle hover:bg-primary/10 text-primary" @click="addItemToList()">
+                  <i class="fas fa-plus"></i>
+                </button>
 
-              <!-- Dropdown menu -->
-              <ul x-show="open && matches.length" x-cloak @click.outside="open = false" class="absolute left-0 right-0 mt-1 w-full bg-white shadow-lg rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto max-h-60 focus:outline-none sm:text-sm z-50" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95">
-                <template x-for="(item, index) in matches" :key="index">
-                  <li>
-                    <a @click="selectItemWithClick(index)" :class="{ 'bg-primary text-white': index === activeIndex }" class="cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-primary hover:text-white block truncate" x-text="item"></a>
-                  </li>
-                </template>
-              </ul>
+                <!-- Dropdown menu -->
+                <ul x-show="open && matches.length" x-cloak @click.outside="open = false" class="absolute left-0 right-0 mt-1 w-full bg-base-100 shadow-lg rounded-box py-1 text-base ring-1 ring-base-300 overflow-auto max-h-60 focus:outline-none sm:text-sm z-50" x-transition>
+                  <template x-for="(item, index) in matches" :key="index">
+                    <li>
+                      <a @click="selectItemWithClick(index)" :class="{ 'bg-primary text-primary-content': index === activeIndex }" class="cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-primary hover:text-primary-content block truncate" x-text="item"></a>
+                    </li>
+                  </template>
+                </ul>
+              </div>
             </div>
 
-            <!-- Quantity Input -->
-            <div class="form-control w-20">
-              <input type="number" min="1" value="1" class="input input-bordered input-sm" x-model="quantity" placeholder="Qty">
+            <!-- Quantity and Unit - stacked on mobile, inline on desktop -->
+            <div class="grid grid-cols-2 gap-2 sm:flex sm:w-1/3">
+              <div class="form-control">
+                <input type="number" min="1" value="1" class="input input-bordered w-full h-10 sm:h-12" x-model="quantity" placeholder="Qty">
+              </div>
+              <div class="form-control">
+                <input type="text" class="input input-bordered w-full h-10 sm:h-12" x-model="unit" placeholder="Unit">
+              </div>
             </div>
-
-            <!-- Unit Input -->
-            <div class="form-control w-24">
-              <input type="text" class="input input-bordered input-sm" x-model="unit" placeholder="Unit">
-            </div>
-
           </div>
         </div>
       </div>

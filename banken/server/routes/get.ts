@@ -102,7 +102,6 @@ export async function searchRecipes(ctx: HttpRequest): Promise<Response> {
     : false;
 
   const search = ctx.params.query as string;
-  console.log("Search: " + search);
 
   let page = Number(ctx.params.page);
   if (Number.isNaN(page) || page < 1) page = 1;
