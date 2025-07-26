@@ -69,13 +69,9 @@
       <% if (it.isLoggedIn) { %>
       <!-- If user IS logged in - you would conditionally show this instead -->
       <ul tabindex="0" class="dropdown-content menu menu-sm p-2 shadow bg-primary rounded-box w-52 mt-3" id="user-dropdown">
-        <li>
-          <% if (it.isAdmin) {%>
-          <a href="/admin" class="justify-between">
-            admin
-          </a>
-          <% } %>
-        </li>
+        <% if (it.isAdmin) {%>
+        <li><a href="/admin"><i class="fas fa-user-shield mr-1"></i> Admin</a></li>
+        <% } %>
         <li><a><i class="fas fa-cog mr-2"></i> Settings</a></li>
         <li>
           <a id="logout-button">
