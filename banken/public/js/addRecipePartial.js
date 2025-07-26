@@ -159,19 +159,26 @@ function initSelects() {
 function handleCategorySelect(e) {
     if (this.value) {
         const option = this.options[this.selectedIndex];
-        const categoryId = this.value;
-        const categoryName = option.text;
+        const tagId = this.value;
+        const tagName = option.text;
+        const tagColor = globalThis.KNOWN_TAGS[tagName] || "#6b7280";
 
-        const badge = document.createElement('span');
-        badge.className = `badge badge-ghost fas ${globalThis.KNOWN_CATEGORIES[categoryName]
-            } flex items-center gap-2 px-3 py-2 rounded-lg mr-2 mb-2`;
+        const textColor = getContrastColor(tagColor);
+
+        const badge = document.createElement("span");
+        badge.className = `badge badge-lg flex items-center gap-2 pl-3 pr-2 py-2 rounded-full mr-2 mb-2 
+              shadow-sm hover:shadow-md transition-all border-0`;
+        badge.style.backgroundColor = tagColor;
+        badge.style.color = textColor;
         badge.innerHTML = `
-        ${categoryName}
-        <input type="hidden" name="categories[]" value="${categoryId}">
-        <button type="button" class="ml-1" onclick="this.parentElement.remove()">
-          <i class="fas fa-times"></i>
-        </button>
-      `;
+              ${tagName}
+              <input type="hidden" name="tags[]" value="${tagId}">
+              <button type="button" class="ml-1 w-6 h-6 flex items-center justify-center rounded-full 
+                      bg-white/20 hover:bg-white/30 transition-colors" 
+                      onclick="this.parentElement.remove()">
+                <i class="fas fa-times text-xs"></i>
+              </button>
+            `;
 
         document.getElementById('categories-container').appendChild(badge);
         this.value = "";
