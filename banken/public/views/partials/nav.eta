@@ -58,8 +58,11 @@
       <% } %>
     </ul>
   </div>
+  
 
   <div class="navbar-end gap-2">
+    <%~ include("./theme_picker")%>
+
     <!-- User Icon - Conditional based on login status -->
     <div class="dropdown dropdown-end">
       <label tabindex="0" class="btn btn-ghost btn-circle avatar">
@@ -238,5 +241,37 @@
     input.addEventListener('input', () => {
       input.classList.remove('input-error');
     });
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Set theme from localStorage or default to light
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateActiveThemeIndicator(savedTheme);
+
+    // Add click handlers for all theme buttons
+    document.querySelectorAll('[data-set-theme]').forEach(button => {
+      button.addEventListener('click', () => {
+        const theme = button.getAttribute('data-set-theme');
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        updateActiveThemeIndicator(theme);
+      });
+    });
+
+    function updateActiveThemeIndicator(activeTheme) {
+      // Hide all checkmarks first
+      document.querySelectorAll('.checkmark').forEach(check => {
+        check.classList.add('hidden');
+      });
+      
+      // Show checkmark for active theme
+      const activeButton = document.querySelector(`[data-set-theme="${activeTheme}"]`);
+      if (activeButton) {
+        activeButton.querySelector('.checkmark').classList.remove('hidden');
+      }
+    }
   });
 </script>
