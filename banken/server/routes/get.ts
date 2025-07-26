@@ -165,6 +165,7 @@ export async function getMyLists(ctx: HttpRequest): Promise<Response> {
 
   const isLoggedIn = ctx.user ? true : false;
   const userId = ctx.user?.id ? ctx.user.id : NaN;
+  console.log(ctx);
 
   const shoppingLists = await getShoppingLists(Http.client, userId);
   const data = { shoppingLists, isLoggedIn, isAdmin, userId };

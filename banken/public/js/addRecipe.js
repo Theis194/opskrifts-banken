@@ -5,66 +5,77 @@ document.addEventListener("DOMContentLoaded", function () {
     "click",
     function () {
       const newRow = document.createElement("div");
-      newRow.className = "ingredient-row grid grid-cols-12 gap-4 items-end";
+      newRow.className = "ingredient-row";
       newRow.innerHTML = `
-          <div class="col-span-5 form-control">
-            <label class="label">
-              <span class="label-text">Name*</span>
-            </label>
-        
-            <!-- combobox -->
-            <div
-              x-data="{
-                query: '',
-                open: false,
-                get matches() {
-                  if (!this.query) return [];
-                  return globalThis.KNOWN_INGREDIENTS
-                    .filter(i => i.toLowerCase().includes(this.query.toLowerCase()))
-                    .slice(0, 8);
-                }
-              }"
-              class="relative w-full"
-            >
-              <input
-                x-model="query"
-                @focus="open = true"
-                @input="open = true"
-                @keydown.escape="open = false"
-                type="text"
-                name="ingredients[${ingredientCount}][name]"
-                placeholder="e.g. chickpeas"
-                class="input input-bordered w-full"
-                autocomplete="off"
-                required
-              >
-              <ul
-                x-show="open && matches.length"
-                @click.outside="open = false"
-                class="menu dropdown-content p-2 shadow bg-base-100 rounded-box absolute w-full max-h-60 overflow-y-auto z-20"
-                x-transition
-              >
-                <template x-for="item in matches" :key="item">
-                  <li><a @click="query = item; open = false" x-text="item"></a></li>
-                </template>
-              </ul>
-            </div>
-          </div>
-        
-          <div class="col-span-2 form-control">
-            <input type="number" step="0.1" name="ingredients[${ingredientCount}][quantity]" class="input input-bordered">
-          </div>
-          <div class="col-span-2 form-control">
-            <input type="text" name="ingredients[${ingredientCount}][unit]" class="input input-bordered">
-          </div>
-          <div class="col-span-2 form-control">
-            <input type="text" name="ingredients[${ingredientCount}][notes]" class="input input-bordered">
-          </div>
-          <div class="col-span-1">
-            <button type="button" class="btn btn-error btn-sm remove-ingredient">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
+          <!-- First line - Ingredient only -->
+              <div class="form-control mb-2 md:mb-0">
+                <label class="label">
+                  <span class="label-text">Name*</span>
+                </label>
+                <!-- DaisyUI combobox w/ Alpine.js -->
+                <div x-data="{
+            query: '',
+            open: false,
+            get matches() {
+              if (!this.query) return [];
+              return window.KNOWN_INGREDIENTS
+                .filter(i => i.toLowerCase().includes(this.query.toLowerCase()))
+                .slice(0, 8);
+            }
+          }" class="relative w-full">
+                  <!-- input -->
+                  <input x-model="query" @focus="open = true" @input="open = true" @keydown.escape="open = false" type="text" name="ingredients[0][name]" placeholder="e.g. chickpeas" class="input input-bordered w-full" autocomplete="off" required>
+
+                  <!-- dropdown -->
+                  <ul x-show="open && matches.length" @click.outside="open = false" class="menu dropdown-content p-2 shadow bg-base-100 rounded-box absolute w-full max-h-60 overflow-y-auto z-20" x-transition>
+                    <template x-for="item in matches" :key="item">
+                      <li>
+                        <a @click="query = item; open = false" x-text="item"></a>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Second line - Quantity, Unit, Notes, Remove -->
+              <div class="space-y-2 sm:space-y-0 sm:grid sm:grid-cols-12 gap-2 items-end">
+                <!-- Quantity -->
+                <div class="sm:col-span-3 form-control">
+                  <label class="label">
+                    <span class="label-text">Quantity</span>
+                  </label>
+                  <input type="number" step="0.1" name="ingredients[0][quantity]" class="input input-bordered w-full">
+                </div>
+
+                <!-- Unit -->
+                <div class="sm:col-span-3 form-control">
+                  <label class="label">
+                    <span class="label-text">Unit</span>
+                  </label>
+                  <input type="text" name="ingredients[0][unit]" class="input input-bordered w-full">
+                </div>
+
+                <!-- Notes with Delete Button -->
+                <div class="sm:col-span-6 form-control">
+                  <label class="label">
+                    <span class="label-text">Notes</span>
+                  </label>
+                  <div class="flex gap-2">
+                    <input type="text" name="ingredients[0][notes]" class="input input-bordered flex-1">
+                    <!-- Remove button - hidden on mobile, shown on sm+ -->
+                    <button type="button" class="btn btn-error btn-sm remove-ingredient h-[2.875rem] min-h-[2.875rem] hidden sm:inline-flex" disabled>
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Delete button - mobile only -->
+                <div class="flex justify-end sm:hidden">
+                  <button type="button" class="btn btn-error btn-sm remove-ingredient" disabled>
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </div>
+              </div>
         `;
       document.getElementById("ingredients-list").appendChild(newRow);
       ingredientCount++;
