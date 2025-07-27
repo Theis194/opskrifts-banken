@@ -28,10 +28,16 @@ export async function exampleRouteFunction(ctx: HttpRequest): Promise<Response> 
 
 export async function postNewRecipe(ctx: HttpRequest): Promise<Response> {
     try {
-        const rawData = await ctx.request.json();
+        if (!ctx.jsonData) {
+            return ctx.res.json({ error: "No JSON data provided" }, 400);
+        }
 
-        const recipeData = RecipeSchema.parse(rawData);
-        const userId = 1; // get userId from jwt
+        if (!ctx.user) {
+            return ctx.res.json({ error: "No user"}, 400);
+        }
+
+        const recipeData = RecipeSchema.parse(ctx.jsonData);
+        const userId = ctx.user.id; // get userId from jwt
 
         const inserter = new RecipeInserter(Http.client);
         const recipeId = await inserter.insertRecipe(userId, recipeData);

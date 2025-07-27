@@ -27,6 +27,7 @@ export interface HttpRequest {
     user?: SafeUser;
     params: QueryParams;
     formData?: FormDataParams;
+    jsonData?: unknown;
     cookies: Record<string, string>;
     url: URL;
     res: ResponseHelpers;
@@ -57,7 +58,8 @@ export class Http {
     static async create(staticDir: string): Promise<Http> {
         Http.env = await load();
 
-        const dbPassword = Deno.env.get("DB_PASSWORD") || Http.env["DB_PASSWORD"];
+        const dbPassword =
+            Deno.env.get("DB_PASSWORD") || Http.env["DB_PASSWORD"];
         const dbUser = Deno.env.get("DB_USER") || Http.env["DB_USER"];
         const hostname = Deno.env.get("DB_HOSTNAME") || Http.env["DB_HOSTNAME"];
 
@@ -157,7 +159,12 @@ export class Http {
     }
 
     static async authMiddleware(req: Request): Promise<{
-        user: { email: string; username: string; role: Role, id: number } | null;
+        user: {
+            email: string;
+            username: string;
+            role: Role;
+            id: number;
+        } | null;
         response?: Response;
     }> {
         const cookies = this.parseCookie(req);
@@ -265,17 +272,39 @@ export class Http {
                     cookies: Http.parseCookie(req),
                     url,
                     res: null as any,
+                    formData: null as any,
+                    jsonData: null as any,
                 };
 
                 ctx.res = new ResponseHelpers(ctx);
 
                 // Add form data if needed
                 if (method === "POST" || method === "PUT") {
-                    try {
-                        const formData = await req.formData();
-                        ctx.formData = await Http.formdataToObject(formData);
-                    } catch (error) {
-                        console.error("Error parsing form data:", error);
+                    const contentType = ctx.request.headers.get("content-type");
+                    if (contentType?.includes("application/json")) {
+                        try {
+                            ctx.jsonData = await ctx.request.json();
+                        } catch (error) {
+                            console.error("Error parsing JSON:", error);
+                            return new Response("Invalid JSON", {
+                                status: 400,
+                            });
+                        }
+                    } else if (
+                        contentType?.includes("multipart/form-data") ||
+                        contentType?.includes(
+                            "application/x-www-form-urlencoded"
+                        )
+                    ) {
+                        try {
+                            const formData = await req.formData();
+                            ctx.formData = await Http.formdataToObject(formData);
+                        } catch (error) {
+                            console.error("Error parsing form data:", error);
+                            return new Response("Error parsing form data", {
+                                status: 400,
+                            });
+                        }
                     }
                 }
 
