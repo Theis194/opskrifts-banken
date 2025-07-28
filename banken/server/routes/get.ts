@@ -205,3 +205,22 @@ function canViewList(userId: number, list: ShoppingListDetail): boolean {
 
   return list.contributors.some(contributor => userId === contributor.user_id);
 }
+
+export async function getEditRecipe(ctx: HttpRequest): Promise<Response> {
+  if (!ctx.user) {
+    return ctx.res.redirect("/");
+  }
+
+  const isAdmin = hasResourcePermission(ctx.user.role, "admin", "write");
+  if (!isAdmin) {
+    return ctx.res.redirect("/");
+  }
+
+  const ingredients = await getKnownIngredients(Http.client);
+  const categories = await getKnownCategories(Http.client);
+  const tags = await getKnownTags(Http.client);
+
+  const data = {isAdmin, ingredients, categories, tags};
+  
+  return Http.renderTemplate("partials/edit_recipe.eta", data)
+}

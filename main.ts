@@ -1,5 +1,5 @@
 import { Http } from "./banken/server/wrapper.ts";
-import { getAddRecipe, getIndex, getRecipePage, getRecipesPage, searchRecipes, getAllRecipesPage, getMyLists, getListById } from "./banken/server/routes/get.ts";
+import { getAddRecipe, getIndex, getRecipePage, getRecipesPage, searchRecipes, getAllRecipesPage, getMyLists, getListById, getEditRecipe } from "./banken/server/routes/get.ts";
 import { addShoppingItem, createNewShoppingList, postCreateUser, postLogin, postLogout, postNewRecipe, removeShoppingItem, shareListWithUser } from "./banken/server/api/post.ts";
 import { getAdmin, getAdminAddRecipe, getCreateUser } from "./banken/server/routes/admingGets.ts";
 
@@ -56,6 +56,13 @@ server
         acm: {
             resource: "admin",
             permission: "read",
+        }
+    })
+    .addRoute("GET", "/admin/recipes/edit", getEditRecipe, {
+        requireAuth: true,
+        acm: {
+            resource: "admin",
+            permission: "write",
         }
     })
     .addRoute("GET", "/recipes", getRecipesPage, { requireAuth: false })
