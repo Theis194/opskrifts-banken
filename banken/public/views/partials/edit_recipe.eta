@@ -16,7 +16,8 @@
             <label class="label">
               <span class="label-text">Recipe Title*</span>
             </label>
-            <input type="text" name="title" placeholder="e.g. Vegan Chocolate Mousse" class="input input-bordered w-full" required>
+            <%= console.log(it)%>
+            <input type="text" name="title" placeholder="e.g. Vegan Chocolate Mousse" class="input input-bordered w-full" value="<%= it.recipe.title%>" required>
           </div>
 
           <!-- Cover Image -->
@@ -24,7 +25,7 @@
             <label class="label">
               <span class="label-text">Cover Image URL</span>
             </label>
-            <input type="url" name="cover_image" placeholder="https://example.com/image.jpg" class="input input-bordered w-full">
+            <input type="url" name="cover_image" placeholder="https://example.com/image.jpg" class="input input-bordered w-full" value="<%= it.recipe.coverImage ? it.recipe.coverImage : ""%>">
           </div>
 
           <!-- Description -->
@@ -32,7 +33,7 @@
             <label class="label">
               <span class="label-text">Description*</span>
             </label>
-            <textarea name="description" class="textarea textarea-bordered h-24" placeholder="Brief description of your recipe..." required></textarea>
+            <textarea name="description" class="textarea textarea-bordered h-24" placeholder="Brief description of your recipe..." required><%= it.recipe.description%></textarea>
           </div>
 
           <!-- Prep/Cook Time -->
@@ -40,14 +41,14 @@
             <label class="label">
               <span class="label-text">Prep Time (minutes)*</span>
             </label>
-            <input type="number" name="prep_time" min="0" class="input input-bordered w-full" required>
+            <input type="number" name="prep_time" min="0" class="input input-bordered w-full" value="<%= it.recipe.prepTime%>" required>
           </div>
 
           <div class="form-control">
             <label class="label">
               <span class="label-text">Cook Time (minutes)</span>
             </label>
-            <input type="number" name="cook_time" min="0" class="input input-bordered w-full">
+            <input type="number" name="cook_time" min="0" class="input input-bordered w-full" value="<%= it.recipe.cookTime%>">
           </div>
 
           <!-- Servings & Difficulty -->
@@ -55,7 +56,7 @@
             <label class="label">
               <span class="label-text">Servings*</span>
             </label>
-            <input type="number" name="servings" min="1" class="input input-bordered w-full" required>
+            <input type="number" name="servings" min="1" class="input input-bordered w-full" value="<%= it.recipe.servings%>" required>
           </div>
 
           <div class="form-control">
@@ -63,10 +64,10 @@
               <span class="label-text">Difficulty*</span>
             </label>
             <select name="difficulty" class="select select-bordered w-full" required>
-              <option value="" disabled selected>Select difficulty</option>
-              <option value="Easy">Easy</option>
-              <option value="Medium">Medium</option>
-              <option value="Hard">Hard</option>
+              <option value="" disabled>Select difficulty</option>
+              <option value="Easy" <%= it.recipe.difficulty === "Easy" ? "selected" : "" %> >Easy</option>
+              <option value="Medium" <%= it.recipe.difficulty === "Medium" ? "selected" : "" %>>Medium</option>
+              <option value="Hard" <%= it.recipe.difficulty === "Hard" ? "selected" : "" %>>Hard</option>
             </select>
           </div>
         </div>

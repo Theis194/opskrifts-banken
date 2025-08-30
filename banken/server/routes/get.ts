@@ -17,6 +17,7 @@ import { hasResourcePermission } from "../../acm/permission.ts";
 import { getItemNames, getShoppingListById, getShoppingLists, userIsAuthor } from "../../db/shopping.ts";
 import { ShoppingListDetail } from "../../db/shopping-db.ts";
 import { getUsernames } from "../../db/user.ts";
+import { json } from "node:stream/consumers";
 
 /*
 export async function exampleRouteFunction(ctx: HttpRequest): Promise<Response> {
@@ -216,11 +217,15 @@ export async function getEditRecipe(ctx: HttpRequest): Promise<Response> {
     return ctx.res.redirect("/");
   }
 
+  const recipeId = Number(ctx.params.id);
+  const recipe = await getRecipeById(Http.client, recipeId);
+  console.log("want to edit recipe: " + JSON.stringify(recipe));
+
   const ingredients = await getKnownIngredients(Http.client);
   const categories = await getKnownCategories(Http.client);
   const tags = await getKnownTags(Http.client);
 
-  const data = {isAdmin, ingredients, categories, tags};
+  const data = {isAdmin, ingredients, categories, tags, recipe};
   
   return Http.renderTemplate("partials/edit_recipe.eta", data)
 }

@@ -54,7 +54,7 @@
           <% if (it.isAdmin) {%>
           <button 
             class="btn btn-sm btn-primary" 
-            hx-get="/admin/recipes/<%= recipe.id %>/edit" 
+            hx-get="/admin/recipes/edit?id=<%= recipe.id %>" 
             hx-target="#content-area"
           >
             <i class="fas fa-edit"></i> Edit
